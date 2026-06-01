@@ -399,6 +399,11 @@ input[type="file"]{display:none}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
+
+/* ── Skeleton Loader ─────────────────────────── */
+.skeleton{background:linear-gradient(90deg,rgba(0,255,157,.07) 25%,rgba(0,255,157,.15) 50%,rgba(0,255,157,.07) 75%);background-size:200% 100%;animation:skel-wave 1.4s infinite;border-radius:6px;min-height:1em}
+@keyframes skel-wave{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
 </style>
   <meta name="description" content="Oracle du Jardinier — Assistant agronomique IA pour la permaculture Loire-Atlantique 44.">
   <meta name="author" content="Nicolas Julienne — Studio Niko Design">
@@ -410,8 +415,12 @@ input[type="file"]{display:none}
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Oracle du Jardinier | Studio Niko Design">
   <meta name="twitter:description" content="Assistant agronomique IA — 60+ plantes, diagnostic photo Pixtral, météo Open-Meteo, calendrier biodynamique">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
-<body>
+<body role="application" aria-label="Oracle du Jardinier — Assistant agronomique IA">
+<main id="app" tabindex="-1">
+
 <header class="hd">
   <h1>🌿 L'Oracle <em>du Jardinier</em></h1>
   <div class="hd-sub">
@@ -2234,15 +2243,15 @@ async function scheduleAllTaskNotifs(){if(Notification.permission!=='granted')re
 // ═══════════════════════════════════════════════════════════
 
 // §V16-A · Indicateur fraîcheur météo
-var _wxLastUpdate = 0;
+const _wxLastUpdate = 0;
 function updateWxAge() {
-  var el = document.getElementById('wxUpdate');
+  const el = document.getElementById('wxUpdate');
   if (!el) return;
   if (!_wxLastUpdate) { el.style.display = 'none'; return; }
-  var mins = Math.round((Date.now() - _wxLastUpdate) / 60000);
+  const mins = Math.round((Date.now() - _wxLastUpdate) / 60000);
   el.style.display = 'flex';
-  var dot = document.getElementById('wxDot');
-  var age = document.getElementById('wxAge');
+  const dot = document.getElementById('wxDot');
+  const age = document.getElementById('wxAge');
   if (mins < 5)  { if(dot) dot.className='wx-dot';       if(age) age.textContent='Données fraîches'; }
   else if (mins < 60) { if(dot) dot.className='wx-dot stale'; if(age) age.textContent='MàJ il y a '+mins+'min'; }
   else               { if(dot) dot.className='wx-dot old';   if(age) age.textContent='MàJ il y a '+Math.round(mins/60)+'h'; }
@@ -2252,11 +2261,11 @@ setInterval(updateWxAge, 60000);
 // §V16-B · Bandeau tâches en retard
 async function checkOverdueTasks() {
   if (!db) return;
-  var tasks = await dbGetAll('tasks');
-  var today = now.toISOString().slice(0, 10);
-  var overdue = tasks.filter(function(t) { return !t.done && t.due && t.due < today; });
-  var bx = document.getElementById('overdueBx');
-  var ct = document.getElementById('overdueContent');
+  const tasks = await dbGetAll('tasks');
+  const today = now.toISOString().slice(0, 10);
+  const overdue = tasks.filter(function(t) { return !t.done && t.due && t.due < today; });
+  const bx = document.getElementById('overdueBx');
+  const ct = document.getElementById('overdueContent');
   if (!bx || !ct) return;
   if (!overdue.length) { bx.classList.remove('on'); return; }
   ct.innerHTML = '<div style="display:flex;align-items:center;gap:9px">'
@@ -2274,9 +2283,9 @@ async function checkOverdueTasks() {
 }
 
 // §V16-C · Recherche historique
-var _allBriefings = [];
-var _histPage = 0;
-var HIST_PAGE = 10;
+const _allBriefings = [];
+const _histPage = 0;
+const HIST_PAGE = 10;
 
 renderHistory = async function() {
   _allBriefings = await dbGetAll('briefings');
@@ -2285,28 +2294,28 @@ renderHistory = async function() {
 };
 
 function filterHistory() {
-  var inp = document.getElementById('histSearch');
-  var q = inp ? (inp.value || '').toLowerCase().trim() : '';
-  var filtered = q ? _allBriefings.filter(function(b) {
+  const inp = document.getElementById('histSearch');
+  const q = inp ? (inp.value || '').toLowerCase().trim() : '';
+  const filtered = q ? _allBriefings.filter(function(b) {
     return (b.result && b.result.summary && b.result.summary.toLowerCase().indexOf(q) >= 0)
       || (b.gardenName && b.gardenName.toLowerCase().indexOf(q) >= 0)
       || (b.result && b.result.do && b.result.do.some(function(d) { return d.title.toLowerCase().indexOf(q) >= 0; }));
   }) : _allBriefings;
-  var page = filtered.slice(0, (_histPage + 1) * HIST_PAGE);
-  var hasMore = filtered.length > page.length;
-  var c2 = document.getElementById('histContainer');
+  const page = filtered.slice(0, (_histPage + 1) * HIST_PAGE);
+  const hasMore = filtered.length > page.length;
+  const c2 = document.getElementById('histContainer');
   if (!c2) return;
   if (!filtered.length) {
     c2.innerHTML = '<div class="es"><div class="ic">🔍</div>' + (q ? 'Aucun résultat' : 'Aucun briefing.') + '</div>';
     return;
   }
   c2.innerHTML = '<div class="hl">' + page.map(function(it, i) {
-    var dt = new Date(it.timestamp);
-    var ds = JOURS[dt.getDay()] + ' ' + dt.getDate() + ' ' + MOIS[dt.getMonth()]
+    const dt = new Date(it.timestamp);
+    const ds = JOURS[dt.getDay()] + ' ' + dt.getDate() + ' ' + MOIS[dt.getMonth()]
       + ' — ' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
-    var w = it.weather;
-    var wS = w ? ('🌡 ' + w.temp + '°C · 💨 ' + w.wind + 'km/h · 💧 ' + w.humidity + '%') : '';
-    var doI = (it.result && it.result.do ? it.result.do : []).slice(0,3).map(function(d){ return '• ' + esc(d.title); }).join('<br>');
+    const w = it.weather;
+    const wS = w ? ('🌡 ' + w.temp + '°C · 💨 ' + w.wind + 'km/h · 💧 ' + w.humidity + '%') : '';
+    const doI = (it.result && it.result.do ? it.result.do : []).slice(0,3).map(function(d){ return '• ' + esc(d.title); }).join('<br>');
     return '<div class="hi" id="hi' + i + '" onclick="this.classList.toggle(\'xp\')">'
       + '<div class="hm"><span class="hd2">' + ds + (it.gardenName ? ' · ' + it.gardenName : '') + '</span><span class="hmd">' + (it.model || '') + '</span></div>'
       + '<div class="hs">' + esc((it.result && it.result.summary) || '') + '</div>'
@@ -2321,23 +2330,23 @@ function filterHistory() {
 
 // §V16-D · Tendance score santé
 async function renderHealthTrend() {
-  var el = document.getElementById('healthTrend');
+  const el = document.getElementById('healthTrend');
   if (!el || !db) return;
-  var scores = await dbGetAll('health_scores');
-  var sorted = scores.filter(function(s){ return !s.gardenId || s.gardenId === activeGarden.id; })
+  const scores = await dbGetAll('health_scores');
+  const sorted = scores.filter(function(s){ return !s.gardenId || s.gardenId === activeGarden.id; })
     .sort(function(a, b){ return a.weekKey > b.weekKey ? -1 : 1; });
   if (sorted.length < 2) {
     el.innerHTML = '<div style="font-size:.78em;color:var(--td);padding:8px">Pas encore assez de données (2 semaines min.).</div>';
     return;
   }
-  var cur = sorted[0], prev = sorted[1];
-  var delta = cur.score - prev.score;
-  var dc = delta > 3 ? 'td-pos' : delta < -3 ? 'td-neg' : 'td-neu';
-  var ds2 = delta > 0 ? '+' : '';
-  var arrow = delta > 3 ? '📈' : delta < -3 ? '📉' : '➡️';
-  var best = sorted.reduce(function(a,b){ return a.score > b.score ? a : b; });
-  var avg = Math.round(sorted.reduce(function(a,b){ return a + b.score; }, 0) / sorted.length);
-  var advice = delta < -10 ? '⚠️ Baisse significative — vérifiez tâches, diagnostics, briefings Oracle.'
+  const cur = sorted[0], prev = sorted[1];
+  const delta = cur.score - prev.score;
+  const dc = delta > 3 ? 'td-pos' : delta < -3 ? 'td-neg' : 'td-neu';
+  const ds2 = delta > 0 ? '+' : '';
+  const arrow = delta > 3 ? '📈' : delta < -3 ? '📉' : '➡️';
+  const best = sorted.reduce(function(a,b){ return a.score > b.score ? a : b; });
+  const avg = Math.round(sorted.reduce(function(a,b){ return a + b.score; }, 0) / sorted.length);
+  const advice = delta < -10 ? '⚠️ Baisse significative — vérifiez tâches, diagnostics, briefings Oracle.'
     : delta > 10 ? '✅ Belle progression !'
     : delta < -3 ? '🔽 Légère baisse — un briefing suffira.'
     : delta > 3 ? '🔼 En progression.'
@@ -2355,7 +2364,7 @@ async function deleteGalItem(type, id, dbId, seedId, photoIdx) {
   if (!confirm('Supprimer cette photo ?')) return;
   if (type === 'seed' && seedId) {
     await dbUpdate('seeds', seedId, function(s) {
-      var photos = (s.photos || []).slice(); photos.splice(photoIdx, 1);
+      const photos = (s.photos || []).slice(); photos.splice(photoIdx, 1);
       return Object.assign({}, s, { photos: photos });
     }).catch(function(){});
     await renderSeeds();
@@ -2368,78 +2377,78 @@ async function deleteGalItem(type, id, dbId, seedId, photoIdx) {
 
 // §V16-F · Export journal .txt / .md
 async function exportJournalTxt() {
-  var entries = await dbGetAll('journal');
+  const entries = await dbGetAll('journal');
   if (!entries.length) { showToast('Journal vide', 'w'); return; }
-  var txt = 'Journal ' + activeGarden.name + '\n' + new Array(40).join('=') + '\n\n'
+  const txt = 'Journal ' + activeGarden.name + '\n' + new Array(40).join('=') + '\n\n'
     + entries.slice().reverse().map(function(e) {
-      var dt = new Date(e.timestamp);
+      const dt = new Date(e.timestamp);
       return dt.toLocaleDateString('fr-FR') + ' ' + String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0')
         + '\n' + new Array(30).join('-') + '\n' + e.text + '\n';
     }).join('\n');
-  var blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
-  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'journal-' + now.toISOString().slice(0,10) + '.txt'; a.click();
   URL.revokeObjectURL(a.href); showToast(entries.length + ' entree(s) exportees');
 }
 async function exportJournalMd() {
-  var entries = await dbGetAll('journal');
+  const entries = await dbGetAll('journal');
   if (!entries.length) { showToast('Journal vide', 'w'); return; }
-  var md = '# Journal ' + activeGarden.name + '\n\n'
+  const md = '# Journal ' + activeGarden.name + '\n\n'
     + entries.slice().reverse().map(function(e) {
-      var dt = new Date(e.timestamp);
+      const dt = new Date(e.timestamp);
       return '## ' + dt.toLocaleDateString('fr-FR') + '\n\n' + e.text + '\n';
     }).join('\n---\n\n');
-  var blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'journal-' + now.toISOString().slice(0,10) + '.md'; a.click();
   URL.revokeObjectURL(a.href); showToast(entries.length + ' entree(s) exportees');
 }
 
 // §V16-G · Tâches récurrentes
 async function addTask() {
-  var title = document.getElementById('tTitle') ? document.getElementById('tTitle').value.trim() : '';
+  const title = document.getElementById('tTitle') ? document.getElementById('tTitle').value.trim() : '';
   if (!title) { showToast('Titre requis', 'w'); return; }
   if (!db) { showToast('DB non prete', 'w'); return; }
-  var recurDays = parseInt((document.getElementById('tRecur') ? document.getElementById('tRecur').value : '') || '0');
-  var recurEnd = document.getElementById('tRecurEnd') ? document.getElementById('tRecurEnd').value : '';
-  var baseDue = document.getElementById('tDue') ? document.getElementById('tDue').value : '';
-  var cat = document.getElementById('tCat') ? document.getElementById('tCat').value : 'autre';
-  var prio = document.getElementById('tPrio') ? document.getElementById('tPrio').value : 'med';
-  var notes = document.getElementById('tNotes') ? document.getElementById('tNotes').value.trim() : '';
+  const recurDays = parseInt((document.getElementById('tRecur') ? document.getElementById('tRecur').value : '') || '0');
+  const recurEnd = document.getElementById('tRecurEnd') ? document.getElementById('tRecurEnd').value : '';
+  const baseDue = document.getElementById('tDue') ? document.getElementById('tDue').value : '';
+  const cat = document.getElementById('tCat') ? document.getElementById('tCat').value : 'autre';
+  const prio = document.getElementById('tPrio') ? document.getElementById('tPrio').value : 'med';
+  const notes = document.getElementById('tNotes') ? document.getElementById('tNotes').value.trim() : '';
   if (!recurDays) {
-    var task = { title: title, due: baseDue, cat: cat, prio: prio, notes: notes, done: false, createdAt: Date.now(), gardenId: activeGarden.id };
-    var tx = db.transaction('tasks','readwrite');
-    var req = tx.objectStore('tasks').add(task);
+    const task = { title: title, due: baseDue, cat: cat, prio: prio, notes: notes, done: false, createdAt: Date.now(), gardenId: activeGarden.id };
+    const tx = db.transaction('tasks','readwrite');
+    const req = tx.objectStore('tasks').add(task);
     tx.oncomplete = async function() {
-      ['tTitle','tDue','tNotes'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+      ['tTitle','tDue','tNotes'].forEach(function(id){ const el=document.getElementById(id); if(el) el.value=''; });
       scheduleTaskNotif(Object.assign({}, task, { id: req.result }));
       await renderTasks(); await renderHarvestAlerts(); showToast('Tache ajoutee'); updateTaskBadge();
     };
     return;
   }
   if (!baseDue) { showToast('Date de debut requise', 'w'); return; }
-  var tasks = []; var d = new Date(baseDue + 'T12:00');
-  var endDate = recurEnd ? new Date(recurEnd + 'T12:00') : new Date(d.getTime() + 90 * 86400000);
-  var count = 0; var grp = baseDue + '_' + title.slice(0,15);
+  const tasks = []; const d = new Date(baseDue + 'T12:00');
+  const endDate = recurEnd ? new Date(recurEnd + 'T12:00') : new Date(d.getTime() + 90 * 86400000);
+  const count = 0; const grp = baseDue + '_' + title.slice(0,15);
   while (d <= endDate && count < 30) {
     tasks.push({ title: title, due: d.toISOString().slice(0,10), cat: cat, prio: prio,
       notes: notes + (notes ? ' ' : '') + 'recur' + recurDays + 'j',
       done: false, createdAt: Date.now() + count, gardenId: activeGarden.id, recurDays: recurDays, recurGroup: grp });
     d = new Date(d.getTime() + recurDays * 86400000); count++;
   }
-  var tx2 = db.transaction('tasks','readwrite');
+  const tx2 = db.transaction('tasks','readwrite');
   tasks.forEach(function(t){ tx2.objectStore('tasks').add(t); });
   tx2.oncomplete = async function() {
-    ['tTitle','tDue','tNotes'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-    var re2 = document.getElementById('tRecur'); if(re2) re2.value='';
-    var re3 = document.getElementById('tRecurEnd'); if(re3) re3.value='';
+    ['tTitle','tDue','tNotes'].forEach(function(id){ const el=document.getElementById(id); if(el) el.value=''; });
+    const re2 = document.getElementById('tRecur'); if(re2) re2.value='';
+    const re3 = document.getElementById('tRecurEnd'); if(re3) re3.value='';
     tasks.forEach(scheduleTaskNotif);
     await renderTasks(); updateTaskBadge(); showToast(count + ' tache(s) recurrente(s)');
   };
 }
 
 // §V16-H · Hook renderHealthTab → renderHealthTrend
-var _origRHT16 = renderHealthTab;
+const _origRHT16 = renderHealthTab;
 renderHealthTab = async function() {
   await _origRHT16();
   await renderHealthTrend();
@@ -2457,5 +2466,7 @@ init();
 
 
 </script>
+
+</main>
 </body>
 </html>
