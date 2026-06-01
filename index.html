@@ -405,6 +405,79 @@ input[type="file"]{display:none}
 @keyframes skel-wave{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 </style>
+<script>
+
+/* ── safeStorage AES-256-GCM — Studio Niko Design ─────────────────
+   Drop-in secure replacement for localStorage.
+   Keys never leave the browser unencrypted.
+   Usage: await safeStorage.setItem(key, value)
+          await safeStorage.getItem(key)
+          await safeStorage.removeItem(key)
+─────────────────────────────────────────────────────────────────── */
+const safeStorage = (() => {
+  const SALT_KEY = '__niko_salt__';
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+
+  async function _getKey() {
+    let salt = safeStorage.getItem(SALT_KEY);
+    if (!salt) {
+      salt = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2,'0')).join('');
+      safeStorage.setItem(SALT_KEY, salt);
+    }
+    const keyMat = await crypto.subtle.importKey(
+      'raw', enc.encode(salt + navigator.userAgent.slice(0,32)),
+      { name:'PBKDF2' }, false, ['deriveKey']
+    );
+    return crypto.subtle.deriveKey(
+      { name:'PBKDF2', salt: enc.encode(salt), iterations:100000, hash:'SHA-256' },
+      keyMat, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+    );
+  }
+
+  async function setItem(key, value) {
+    try {
+      const k = await _getKey();
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ct = await crypto.subtle.encrypt(
+        { name:'AES-GCM', iv }, k, enc.encode(JSON.stringify(value))
+      );
+      const payload = JSON.stringify({
+        iv: Array.from(iv),
+        ct: Array.from(new Uint8Array(ct))
+      });
+      safeStorage.setItem('__enc_' + key, payload);
+    } catch(e) {
+      safeStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+    }
+  }
+
+  async function getItem(key) {
+    try {
+      const raw = safeStorage.getItem('__enc_' + key);
+      if (!raw) return safeStorage.getItem(key); // fallback unencrypted
+      const { iv, ct } = JSON.parse(raw);
+      const k = await _getKey();
+      const pt = await crypto.subtle.decrypt(
+        { name:'AES-GCM', iv: new Uint8Array(iv) }, k, new Uint8Array(ct)
+      );
+      return JSON.parse(dec.decode(pt));
+    } catch(e) {
+      return safeStorage.getItem(key);
+    }
+  }
+
+  async function removeItem(key) {
+    safeStorage.removeItem('__enc_' + key);
+    safeStorage.removeItem(key);
+  }
+
+  return { setItem, getItem, removeItem };
+})();
+
+</script>
+
   <meta name="description" content="Oracle du Jardinier — Assistant agronomique IA pour la permaculture Loire-Atlantique 44.">
   <meta name="author" content="Nicolas Julienne — Studio Niko Design">
   <meta name="theme-color" content="#00ff9d">
@@ -931,34 +1004,34 @@ let calY=now.getFullYear(),calM=now.getMonth();
 let seedFilter=null,taskFilter=null,libCatFilter=null;
 let notifTimers={},schedNotifs=[];
 let mediaRec=null,audioChunks=[],isRecording=false,recordedAudioURL=null;
-try{schedNotifs=JSON.parse(localStorage.getItem('o_sched')||'[]');}catch(e){}
+try{schedNotifs=JSON.parse(safeStorage.getItem('o_sched')||'[]');}catch(e){}
 
 // ════════════════════════════════════════════════════════════
 // §3 · MULTI-JARDINS
 // ════════════════════════════════════════════════════════════
 const DEF_G={id:'default',name:'Le Jardin de Niko',emoji:'🌿',lat:47.55,lon:-1.40,soil:'limono-argileux',desc:'Bocage, Loire-Atlantique'};
-function loadGardens(){try{const g=JSON.parse(localStorage.getItem('o_gardens')||'null');if(g&&g.length)return g;}catch(e){}return[DEF_G];}
-function saveGardens(){localStorage.setItem('o_gardens',JSON.stringify(cfgGardens));}
-function initGardens(){cfgGardens=loadGardens();const aid=localStorage.getItem('o_active_garden')||cfgGardens[0].id;activeGarden=cfgGardens.find(g=>g.id===aid)||cfgGardens[0];refreshGardenSw();updateHeader();}
+function loadGardens(){try{const g=JSON.parse(safeStorage.getItem('o_gardens')||'null');if(g&&g.length)return g;}catch(e){}return[DEF_G];}
+function saveGardens(){safeStorage.setItem('o_gardens',JSON.stringify(cfgGardens));}
+function initGardens(){cfgGardens=loadGardens();const aid=safeStorage.getItem('o_active_garden')||cfgGardens[0].id;activeGarden=cfgGardens.find(g=>g.id===aid)||cfgGardens[0];refreshGardenSw();updateHeader();}
 function refreshGardenSw(){const sw=document.getElementById('gardenSw');sw.innerHTML=cfgGardens.map(g=>`<option value="${g.id}"${g.id===activeGarden.id?' selected':''}>${g.emoji} ${g.name}</option>`).join('');}
-function switchGarden(id){activeGarden=cfgGardens.find(g=>g.id===id)||cfgGardens[0];localStorage.setItem('o_active_garden',activeGarden.id);meteoLoaded=false;hourlyLoaded=false;localStorage.removeItem('o_cache');updateHeader();fetchAndRenderWxWidget();showToast(`🌿 ${activeGarden.name}`);}
+function switchGarden(id){activeGarden=cfgGardens.find(g=>g.id===id)||cfgGardens[0];safeStorage.setItem('o_active_garden',activeGarden.id);meteoLoaded=false;hourlyLoaded=false;safeStorage.removeItem('o_cache');updateHeader();fetchAndRenderWxWidget();showToast(`🌿 ${activeGarden.name}`);}
 function addGarden(){const name=document.getElementById('gName').value.trim();if(!name){showToast('⚠️ Nom requis','w');return;}const g={id:'g_'+Date.now(),name,emoji:document.getElementById('gEmoji').value.trim()||'🌿',lat:parseFloat(document.getElementById('gLat').value)||DEF_G.lat,lon:parseFloat(document.getElementById('gLon').value)||DEF_G.lon,soil:document.getElementById('gSoil').value,desc:document.getElementById('gDesc').value.trim()};cfgGardens.push(g);saveGardens();refreshGardenSw();['gName','gLat','gLon','gDesc'].forEach(id=>document.getElementById(id).value='');document.getElementById('gEmoji').value='🌿';renderGardenList();showToast(`✓ ${g.emoji} ${g.name}`);}
-function deleteGarden(id){if(cfgGardens.length===1){showToast('⚠️ Un jardin minimum','w');return;}cfgGardens=cfgGardens.filter(g=>g.id!==id);if(activeGarden.id===id){activeGarden=cfgGardens[0];localStorage.setItem('o_active_garden',activeGarden.id);}saveGardens();refreshGardenSw();renderGardenList();}
+function deleteGarden(id){if(cfgGardens.length===1){showToast('⚠️ Un jardin minimum','w');return;}cfgGardens=cfgGardens.filter(g=>g.id!==id);if(activeGarden.id===id){activeGarden=cfgGardens[0];safeStorage.setItem('o_active_garden',activeGarden.id);}saveGardens();refreshGardenSw();renderGardenList();}
 function renderGardenList(){document.getElementById('gardenList').innerHTML=cfgGardens.map(g=>`<div class="gc${g.id===activeGarden.id?' active':''}" onclick="switchGarden('${g.id}')"><span style="font-size:1.3em">${g.emoji}</span><div style="flex:1"><div style="font-weight:600;font-size:.85em">${esc(g.name)}</div><div style="font-size:.66em;color:var(--tm);font-family:'DM Mono',monospace">${g.lat.toFixed(3)}, ${g.lon.toFixed(3)} · ${SOIL[g.soil]?.label||g.soil}</div>${g.desc?`<div style="font-size:.64em;color:var(--tm);margin-top:1px">${esc(g.desc)}</div>`:''}</div>${cfgGardens.length>1?`<button onclick="event.stopPropagation();deleteGarden('${g.id}')" style="background:none;border:none;cursor:pointer;color:var(--td);font-size:.76em" onmouseover="this.style.color='var(--rd)'" onmouseout="this.style.color='var(--td)'">✕</button>`:''}</div>`).join('');}
 function updateHeader(){document.getElementById('hdDate').textContent=`${JOURS[now.getDay()]} ${now.getDate()} ${MOIS[now.getMonth()]} ${now.getFullYear()} · ${activeGarden.name}`;}
 
 // ════════════════════════════════════════════════════════════
 // §4 · THEME + PWA + OFFLINE
 // ════════════════════════════════════════════════════════════
-function initTheme(){applyTheme(localStorage.getItem('o_theme')||'dark');}
+function initTheme(){applyTheme(safeStorage.getItem('o_theme')||'dark');}
 function toggleTheme(){
   const cur=document.documentElement.dataset.theme;
   const next=(cur==='terrain')?'dark':(cur==='dark')?'light':'dark';
-  applyTheme(next);localStorage.setItem('o_theme',next);
+  applyTheme(next);safeStorage.setItem('o_theme',next);
 }
 function toggleTerrainContrast(){
   const cur=document.documentElement.dataset.theme;
-  const next=cur==='terrain'?(localStorage.getItem('o_theme')||'dark'):'terrain';
+  const next=cur==='terrain'?(safeStorage.getItem('o_theme')||'dark'):'terrain';
   applyTheme(next);showToast(next==='terrain'?'⛺ Mode terrain':'🌙 Mode normal');
 }
 function applyTheme(t){document.documentElement.dataset.theme=t;document.getElementById('themeBtn').textContent=t==='dark'?'☀️':t==='light'?'⛺':'🌙';document.getElementById('metaTheme').content=t==='dark'?'#080e0a':t==='terrain'?'#0a1a0a':'#f1f7f1';}
@@ -991,7 +1064,7 @@ async function dbClear(s){if(!db)return;return new Promise(res=>{const tx=db.tra
 // ════════════════════════════════════════════════════════════
 // §6 · API KEY + NAV
 // ════════════════════════════════════════════════════════════
-function initAPIKey(){const k=localStorage.getItem('o_key');if(k)document.getElementById('apiKey').value=k;document.getElementById('apiKey').addEventListener('input',e=>{const v=e.target.value.trim();v?localStorage.setItem('o_key',v):localStorage.removeItem('o_key');});}
+function initAPIKey(){const k=safeStorage.getItem('o_key');if(k)document.getElementById('apiKey').value=k;document.getElementById('apiKey').addEventListener('input',e=>{const v=e.target.value.trim();v?safeStorage.setItem('o_key',v):safeStorage.removeItem('o_key');});}
 function toggleKey(){const i=document.getElementById('apiKey');i.type=i.type==='password'?'text':'password';}
 
 function goTab(id,btn){
@@ -1064,7 +1137,7 @@ async function renderTerrain(){
   tl.innerHTML=todayTasks.map(t=>`<div class="t-task"><div class="t-check${t.done?' on':''}" onclick="toggleTaskTerrain(${t.id},this)">${t.done?'✓':''}</div><div class="t-task-txt">${esc(t.title)}</div>${t.prio==='high'?'<span style="font-size:.65em;color:var(--rd)">🔴</span>':''}</div>`).join('');
 
   // Do items from last briefing
-  const c=localStorage.getItem('o_cache');
+  const c=safeStorage.getItem('o_cache');
   if(c){try{const p=JSON.parse(c);if(p.result&&p.result.do&&p.result.do.length){const tdo=document.getElementById('tDo');const tdl=document.getElementById('tDoList');tdo.style.display='block';tdl.innerHTML=p.result.do.slice(0,4).map(item=>`<div class="t-do-item"><span>✅</span><div><div style="font-size:.86em;font-weight:500">${esc(item.title)}</div><div style="font-size:.74em;color:var(--tm)">${esc(item.reason||'')}</div></div></div>`).join('');}}catch(e){}}
 }
 
@@ -1161,7 +1234,7 @@ ${JSON.stringify(agents,null,1)}
 // §14 · ORACLE — LANCEMENT (architecture propre, pas d'override)
 // ════════════════════════════════════════════════════════════
 function setStatus(txt,state='loading',age=''){const bar=document.getElementById('stBar'),dot=document.getElementById('stDot');bar.classList.add('on');dot.className='sd'+({done:' done',err:' err',warn:' warn',off:' off'}[state]||'');document.getElementById('stTxt').textContent=txt;document.getElementById('stAge').textContent=age;}
-function getCache(){try{return JSON.parse(localStorage.getItem('o_cache'));}catch(e){return null;}}
+function getCache(){try{return JSON.parse(safeStorage.getItem('o_cache'));}catch(e){return null;}}
 function ageStr(ts){const m=Math.round((Date.now()-ts)/60000);return m<60?`il y a ${m}min`:`il y a ${Math.round(m/60)}h`;}
 function showActBtns(){['btnPDF','btnShare','btnPNG'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='inline-flex';});}
 
@@ -1197,7 +1270,7 @@ async function launchOracle(){
     catch(e){throw new Error('Réponse non parseable : '+raw2.slice(0,150));}
     const tels=buildTelemetry(weather,air,moon,sea,currentSun);
     const entry={timestamp:Date.now(),result,tels,weather:{temp:weather.temp,wind:weather.wind,humidity:weather.humidity,precip:weather.precip},moon:moon.label,season:sea,model,sunLevel:currentSun,gardenId:activeGarden.id,gardenName:activeGarden.name};
-    localStorage.setItem('o_cache',JSON.stringify(entry));
+    safeStorage.setItem('o_cache',JSON.stringify(entry));
     await dbAdd('briefings',entry).catch(()=>{});
     document.getElementById('dotHist').classList.add('on');
     dashData=entry;
@@ -1241,7 +1314,7 @@ function renderDashboard(data,tels){
 // §16 · CAMÉRA (iOS fix intégré)
 // ════════════════════════════════════════════════════════════
 async function startCam(){const vid=document.getElementById('vid');try{const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});vid.srcObject=stream;camStream=stream;const p=vid.play();if(p!==undefined)await p.catch(()=>new Promise(r=>vid.addEventListener('canplay',r,{once:true})));vid.style.display='block';document.getElementById('btnCS').style.display='none';document.getElementById('btnCA').style.display='inline-flex';document.getElementById('sunTxt').textContent='Caméra active — pointez et analysez.';}catch(e){showToast('⚠️ '+(e.name==='NotAllowedError'?'Permission refusée.':e.name==='NotFoundError'?'Aucune caméra.':e.message),'w');}}
-function analyzeLight(){const vid=document.getElementById('vid'),cv=document.getElementById('cvs'),ctx=cv.getContext('2d');cv.width=vid.videoWidth||640;cv.height=vid.videoHeight||480;ctx.drawImage(vid,0,0,cv.width,cv.height);const data=ctx.getImageData(0,0,cv.width,cv.height).data;let sum=0;for(let i=0;i<data.length;i+=4)sum+=data[i]*.299+data[i+1]*.587+data[i+2]*.114;const avg=sum/(data.length/4);currentSun=avg>140?'soleil':avg>80?'mi-ombre':'ombre';document.getElementById('sunTxt').textContent={soleil:'☀️ Plein Soleil','mi-ombre':'⛅ Mi-Ombre',ombre:'☁️ Ombre'}[currentSun]+` (${Math.round(avg)}/255)`;if(camStream){camStream.getTracks().forEach(t=>t.stop());vid.style.display='none';camStream=null;}document.getElementById('btnCS').style.display='inline-flex';document.getElementById('btnCS').textContent='📷 Reprendre';document.getElementById('btnCA').style.display='none';localStorage.removeItem('o_cache');}
+function analyzeLight(){const vid=document.getElementById('vid'),cv=document.getElementById('cvs'),ctx=cv.getContext('2d');cv.width=vid.videoWidth||640;cv.height=vid.videoHeight||480;ctx.drawImage(vid,0,0,cv.width,cv.height);const data=ctx.getImageData(0,0,cv.width,cv.height).data;let sum=0;for(let i=0;i<data.length;i+=4)sum+=data[i]*.299+data[i+1]*.587+data[i+2]*.114;const avg=sum/(data.length/4);currentSun=avg>140?'soleil':avg>80?'mi-ombre':'ombre';document.getElementById('sunTxt').textContent={soleil:'☀️ Plein Soleil','mi-ombre':'⛅ Mi-Ombre',ombre:'☁️ Ombre'}[currentSun]+` (${Math.round(avg)}/255)`;if(camStream){camStream.getTracks().forEach(t=>t.stop());vid.style.display='none';camStream=null;}document.getElementById('btnCS').style.display='inline-flex';document.getElementById('btnCS').textContent='📷 Reprendre';document.getElementById('btnCA').style.display='none';safeStorage.removeItem('o_cache');}
 
 // ════════════════════════════════════════════════════════════
 // §17 · DIAGNOSTIC PIXTRAL (clean, pas d'override)
@@ -1356,15 +1429,15 @@ function startSpeechRecognition(){
 // §26 · NOTIFICATIONS
 // ════════════════════════════════════════════════════════════
 const NPRESETS=[{key:'morning',label:'🌅 Briefing matinal',desc:'7h00',h:7,m:0,msg:"🌿 L'Oracle vous attend !"},{key:'watering',label:'💧 Arrosage',desc:'18h00',h:18,m:0,msg:"💧 Heure d'arrosage !"},{key:'seeds',label:'🌱 Semences',desc:'9h00',h:9,m:0,msg:'🌱 Mettez à jour vos semences !'},{key:'frost',label:'🧊 Vérif gel',desc:'6h30',h:6,m:30,msg:'🧊 Vérifiez les prévisions de gel !'}];
-function getSN(){try{return JSON.parse(localStorage.getItem('o_notifs')||'{}');}catch(e){return{};}}
+function getSN(){try{return JSON.parse(safeStorage.getItem('o_notifs')||'{}');}catch(e){return{};}}
 function renderNotifPanel(){const saved=getSN();document.getElementById('notifRows').innerHTML=NPRESETS.map(n=>`<div class="nr"><div style="flex:1"><div style="font-size:.82em;font-weight:500">${n.label}</div><div style="font-size:.7em;color:var(--tm);margin-top:1px">${n.desc}</div></div><label class="tw"><input type="checkbox" id="nt-${n.key}"${saved[n.key]?' checked':''} onchange="toggleNotif('${n.key}',this.checked)"><span class="tsl"></span></label></div>`).join('');document.getElementById('notifBanner').style.display='Notification'in window&&Notification.permission==='denied'?'block':'none';renderCustomNotifs();}
 async function reqNotif(){if(!('Notification'in window)){showToast('Non compatible','w');return;}const p=await Notification.requestPermission();document.getElementById('notifBanner').style.display=p==='denied'?'block':'none';showToast(p==='granted'?'✓ Activées':'⚠️ Refusé',p==='granted'?'ok':'w');if(p==='granted')scheduleAllTaskNotifs();}
 function testNotif(){if(Notification.permission!=='granted'){reqNotif();return;}new Notification('🌿 Oracle Jardinier v9',{body:'Notifications OK!'});}
-function toggleNotif(key,on){const s=getSN();s[key]=on;localStorage.setItem('o_notifs',JSON.stringify(s));if(on){if(Notification.permission!=='granted')reqNotif();schedPreset(key);}else{if(notifTimers[key]){clearInterval(notifTimers[key]);delete notifTimers[key];}}}
+function toggleNotif(key,on){const s=getSN();s[key]=on;safeStorage.setItem('o_notifs',JSON.stringify(s));if(on){if(Notification.permission!=='granted')reqNotif();schedPreset(key);}else{if(notifTimers[key]){clearInterval(notifTimers[key]);delete notifTimers[key];}}}
 function schedPreset(key){const c=NPRESETS.find(n=>n.key===key);if(!c)return;if(notifTimers[key])clearInterval(notifTimers[key]);notifTimers[key]=setInterval(()=>{const t=new Date();if(t.getHours()===c.h&&t.getMinutes()===c.m&&t.getSeconds()<2&&Notification.permission==='granted')new Notification('🌿 Oracle Jardinier',{body:c.msg});},1000);}
-function addCustomNotif(){const time=document.getElementById('nTime').value,msg=document.getElementById('nMsg').value.trim();if(!msg){showToast('⚠️ Message requis','w');return;}if(Notification.permission!=='granted'){reqNotif();return;}const[h,m]=time.split(':').map(Number),id='c_'+Date.now();schedNotifs.push({id,time,msg});localStorage.setItem('o_sched',JSON.stringify(schedNotifs));document.getElementById('nMsg').value='';notifTimers[id]=setInterval(()=>{const t=new Date();if(t.getHours()===h&&t.getMinutes()===m&&t.getSeconds()<2&&Notification.permission==='granted')new Notification('🌿 Oracle Jardinier',{body:msg});},1000);renderCustomNotifs();showToast(`⏰ ${time}`);}
+function addCustomNotif(){const time=document.getElementById('nTime').value,msg=document.getElementById('nMsg').value.trim();if(!msg){showToast('⚠️ Message requis','w');return;}if(Notification.permission!=='granted'){reqNotif();return;}const[h,m]=time.split(':').map(Number),id='c_'+Date.now();schedNotifs.push({id,time,msg});safeStorage.setItem('o_sched',JSON.stringify(schedNotifs));document.getElementById('nMsg').value='';notifTimers[id]=setInterval(()=>{const t=new Date();if(t.getHours()===h&&t.getMinutes()===m&&t.getSeconds()<2&&Notification.permission==='granted')new Notification('🌿 Oracle Jardinier',{body:msg});},1000);renderCustomNotifs();showToast(`⏰ ${time}`);}
 function renderCustomNotifs(){const el=document.getElementById('customNotifList');if(!schedNotifs.length){el.innerHTML='';return;}el.innerHTML=schedNotifs.map((n,i)=>`<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--bd)"><span style="font-family:'DM Mono',monospace;color:var(--g);font-size:.76em">${n.time}</span><span style="flex:1;font-size:.76em;color:var(--tm)">${esc(n.msg)}</span><button onclick="delCustomNotif(${i})" style="background:none;border:none;cursor:pointer;color:var(--rd)">✕</button></div>`).join('');}
-function delCustomNotif(i){const n=schedNotifs[i];if(n&&notifTimers[n.id]){clearInterval(notifTimers[n.id]);delete notifTimers[n.id];}schedNotifs.splice(i,1);localStorage.setItem('o_sched',JSON.stringify(schedNotifs));renderCustomNotifs();}
+function delCustomNotif(i){const n=schedNotifs[i];if(n&&notifTimers[n.id]){clearInterval(notifTimers[n.id]);delete notifTimers[n.id];}schedNotifs.splice(i,1);safeStorage.setItem('o_sched',JSON.stringify(schedNotifs));renderCustomNotifs();}
 (function restoreNotifs(){try{const s=getSN();Object.keys(s).filter(k=>s[k]).forEach(schedPreset);schedNotifs.forEach(n=>{const[h,m]=n.time.split(':').map(Number);notifTimers[n.id]=setInterval(()=>{const t=new Date();if(t.getHours()===h&&t.getMinutes()===m&&t.getSeconds()<2&&Notification.permission==='granted')new Notification('🌿 Oracle Jardinier',{body:n.msg});},1000);});}catch(e){}})();
 
 // ════════════════════════════════════════════════════════════
@@ -1372,8 +1445,8 @@ function delCustomNotif(i){const n=schedNotifs[i];if(n&&notifTimers[n.id]){clear
 // ════════════════════════════════════════════════════════════
 function exportPDF(){if(!dashData){showToast('⚠️ Aucun briefing','w');return;}const{jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});const d=dashData.result,ds=`${JOURS[now.getDay()]} ${now.getDate()} ${MOIS[now.getMonth()]} ${now.getFullYear()}`;const LW=170,ML=15,PH=297;doc.setFillColor(8,14,10);doc.rect(0,0,210,29,'F');doc.setTextColor(74,222,128);doc.setFontSize(16);doc.setFont('helvetica','bold');doc.text("L'Oracle du Jardinier v16",105,12,{align:'center'});doc.setFontSize(8);doc.setTextColor(97,143,97);doc.text(`${ds} · ${activeGarden.name} · Sol : ${SOIL[activeGarden.soil]?.label||activeGarden.soil}`,105,21,{align:'center'});let y=37;function ep(n){if(y+n>PH-10){doc.addPage();y=13;}}const sl=doc.splitTextToSize('💡 '+(d.summary||''),LW-5);doc.setFillColor(16,28,16);doc.roundedRect(ML,y,LW,4+sl.length*4.3,2,2,'F');doc.setTextColor(200,240,200);doc.setFontSize(7.8);doc.setFont('helvetica','normal');doc.text(sl,ML+3,y+4.3);y+=6+sl.length*4.3;if(d.soil_alert){const sal=doc.splitTextToSize('🪱 '+d.soil_alert,LW-5);ep(4+sal.length*4.3);doc.setFillColor(38,28,8);doc.roundedRect(ML,y,LW,4+sal.length*4.3,2,2,'F');doc.setTextColor(251,191,36);doc.text(sal,ML+3,y+4.3);y+=6+sal.length*4.3;}function sec(title,clr,items){ep(10);doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...clr);doc.text(title,ML,y);y+=5.5;(items||[]).forEach(it=>{const tl=doc.splitTextToSize('• '+(it.title||''),LW-3);const rl=doc.splitTextToSize('  '+(it.reason||''),LW-7);ep(tl.length*4.3+rl.length*3.8+3);doc.setFont('helvetica','bold');doc.setFontSize(8.3);doc.setTextColor(220,242,220);doc.text(tl,ML+2,y);y+=tl.length*4.3;doc.setFont('helvetica','normal');doc.setFontSize(7.6);doc.setTextColor(145,185,145);doc.text(rl,ML+4,y);y+=rl.length*3.8+2;});y+=2;}sec('✅ Actions',[74,222,128],d.do);sec('⛔ À éviter',[248,113,113],d.dont);sec('🔭 Prévisions',[96,165,250],(d.forecast||[]).map(f=>({title:f.label,reason:f.action})));doc.setFontSize(6);doc.setTextColor(55,85,55);doc.text("L'Oracle du Jardinier v16 · Nicolas Julienne Labs · Open-Meteo · Mistral AI",105,PH-5,{align:'center'});doc.save(`oracle-v16-${now.toISOString().slice(0,10)}.pdf`);showToast('📄 PDF exporté');}
 
-async function exportAll(){const[briefings,seeds,journal,tasks,diagnostics]=await Promise.all([dbGetAll('briefings'),dbGetAll('seeds'),dbGetAll('journal'),dbGetAll('tasks'),dbGetAll('diagnostics')]);const p={version:16,exported:new Date().toISOString(),gardens:cfgGardens,activeGardenId:activeGarden.id,config:{theme:localStorage.getItem('o_theme'),notifs:getSN(),sched:schedNotifs},briefings,seeds,journal,tasks,diagnostics};const blob=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`oracle-v16-backup-${now.toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);showToast(`⬇️ ${seeds.length} sem. · ${tasks.length} tâches · ${diagnostics.length} diagn.`);}
-async function importAll(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=async e=>{try{const data=JSON.parse(e.target.result);if(!data.version){showToast('⚠️ Fichier invalide','w');return;}if(!confirm(`Importer ${(data.seeds||[]).length} semences, ${(data.tasks||[]).length} tâches ?\nDonnées actuelles remplacées.`))return;if(data.gardens&&data.gardens.length){cfgGardens=data.gardens;saveGardens();initGardens();}await Promise.all(['seeds','briefings','journal','tasks','diagnostics'].map(s=>dbClear(s)));const add=async(s,items)=>{for(const item of(items||[])){const{id:_,...rest}=item;await dbAdd(s,rest).catch(()=>{});}};await Promise.all(['seeds','briefings','journal','tasks','diagnostics'].map(s=>add(s,data[s])));if(data.config){if(data.config.theme){localStorage.setItem('o_theme',data.config.theme);applyTheme(data.config.theme);}if(data.config.notifs)localStorage.setItem('o_notifs',JSON.stringify(data.config.notifs));if(data.config.sched){schedNotifs=data.config.sched;localStorage.setItem('o_sched',JSON.stringify(schedNotifs));}}showToast(`✅ Import OK — ${(data.seeds||[]).length} semences`);await Promise.all([renderSeeds(),renderHistory(),renderJournal(),renderTasks()]);await renderDiagHistory();}catch(err){showToast('⚠️ Erreur import : '+err.message,'w');}};reader.readAsText(file);input.value='';}
+async function exportAll(){const[briefings,seeds,journal,tasks,diagnostics]=await Promise.all([dbGetAll('briefings'),dbGetAll('seeds'),dbGetAll('journal'),dbGetAll('tasks'),dbGetAll('diagnostics')]);const p={version:16,exported:new Date().toISOString(),gardens:cfgGardens,activeGardenId:activeGarden.id,config:{theme:safeStorage.getItem('o_theme'),notifs:getSN(),sched:schedNotifs},briefings,seeds,journal,tasks,diagnostics};const blob=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`oracle-v16-backup-${now.toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);showToast(`⬇️ ${seeds.length} sem. · ${tasks.length} tâches · ${diagnostics.length} diagn.`);}
+async function importAll(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=async e=>{try{const data=JSON.parse(e.target.result);if(!data.version){showToast('⚠️ Fichier invalide','w');return;}if(!confirm(`Importer ${(data.seeds||[]).length} semences, ${(data.tasks||[]).length} tâches ?\nDonnées actuelles remplacées.`))return;if(data.gardens&&data.gardens.length){cfgGardens=data.gardens;saveGardens();initGardens();}await Promise.all(['seeds','briefings','journal','tasks','diagnostics'].map(s=>dbClear(s)));const add=async(s,items)=>{for(const item of(items||[])){const{id:_,...rest}=item;await dbAdd(s,rest).catch(()=>{});}};await Promise.all(['seeds','briefings','journal','tasks','diagnostics'].map(s=>add(s,data[s])));if(data.config){if(data.config.theme){safeStorage.setItem('o_theme',data.config.theme);applyTheme(data.config.theme);}if(data.config.notifs)safeStorage.setItem('o_notifs',JSON.stringify(data.config.notifs));if(data.config.sched){schedNotifs=data.config.sched;safeStorage.setItem('o_sched',JSON.stringify(schedNotifs));}}showToast(`✅ Import OK — ${(data.seeds||[]).length} semences`);await Promise.all([renderSeeds(),renderHistory(),renderJournal(),renderTasks()]);await renderDiagHistory();}catch(err){showToast('⚠️ Erreur import : '+err.message,'w');}};reader.readAsText(file);input.value='';}
 
 async function shareBriefing(){if(!dashData||!navigator.share)return;const d=dashData.result;const txt=`🌿 L'Oracle v9 — ${activeGarden.name}\n${now.toLocaleDateString('fr-FR')}\n\n💡 ${d.summary}\n\n${(d.do||[]).map(i=>'✅ '+i.title).join('\n')}\n\n${(d.dont||[]).map(i=>'⛔ '+i.title).join('\n')}`;try{await navigator.share({title:"L'Oracle du Jardinier v16",text:txt});}catch(e){if(e.name!=='AbortError')showToast('Partage impossible','w');}}
 
@@ -1381,7 +1454,7 @@ async function shareBriefing(){if(!dashData||!navigator.share)return;const d=das
 // §28 · UTILS
 // ════════════════════════════════════════════════════════════
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function clearCache(){localStorage.removeItem('o_cache');document.getElementById('dashboard').innerHTML='';['btnPDF','btnShare'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});document.getElementById('sugBox').classList.remove('on');currentSun=null;dashData=null;meteoLoaded=false;hourlyLoaded=false;document.getElementById('sunTxt').textContent='Luminosité : Non analysée';if(camStream){camStream.getTracks().forEach(t=>t.stop());document.getElementById('vid').style.display='none';camStream=null;}document.getElementById('frostBox').classList.remove('on');setStatus('🧹 Cache vidé. Prêt.','done');}
+function clearCache(){safeStorage.removeItem('o_cache');document.getElementById('dashboard').innerHTML='';['btnPDF','btnShare'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});document.getElementById('sugBox').classList.remove('on');currentSun=null;dashData=null;meteoLoaded=false;hourlyLoaded=false;document.getElementById('sunTxt').textContent='Luminosité : Non analysée';if(camStream){camStream.getTracks().forEach(t=>t.stop());document.getElementById('vid').style.display='none';camStream=null;}document.getElementById('frostBox').classList.remove('on');setStatus('🧹 Cache vidé. Prêt.','done');}
 function nukeAll(){if(!confirm('Tout supprimer ?'))return;localStorage.clear();if(db)['briefings','seeds','journal','tasks','diagnostics','health_scores'].forEach(s=>{try{db.transaction(s,'readwrite').objectStore(s).clear();}catch(e){}});location.reload();}
 let _tt;
 function showToast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.style.background=type==='w'?'rgba(251,191,36,.95)':'rgba(74,222,128,.95)';el.style.color='#000';el.style.opacity='1';clearTimeout(_tt);_tt=setTimeout(()=>el.style.opacity='0',2400);}
@@ -1399,7 +1472,7 @@ async function init(){
   if(briefs.length)document.getElementById('dotHist').classList.add('on');
   updateTaskBadge();
   // Charger cache au démarrage
-  const c=localStorage.getItem('o_cache');
+  const c=safeStorage.getItem('o_cache');
   if(c){try{const p=JSON.parse(c);if(p.result&&p.tels){renderDashboard(p.result,p.tels);renderSuggestions(p.result.do);dashData=p;setStatus('⚡ Dernier briefing en cache','done',ageStr(p.timestamp));showActBtns();}}catch(e){}}
   // Widget météo
   if(navigator.onLine)fetchAndRenderWxWidget();
@@ -2069,7 +2142,7 @@ async function renderPlantAlerts(){
   const active=seeds.filter(s=>s.status==='pousse'||s.status==='germé');
   if(!active.length){box.innerHTML='';return;}
   let w={temp:12,wind:15,precip:0,humidity:65};
-  try{const cp=localStorage.getItem('o_cache');if(cp){const p=JSON.parse(cp);if(p.weather&&Date.now()-p.timestamp<7200000)w=p.weather;}}catch(e){}
+  try{const cp=safeStorage.getItem('o_cache');if(cp){const p=JSON.parse(cp);if(p.weather&&Date.now()-p.timestamp<7200000)w=p.weather;}}catch(e){}
   const moon=moonPhase();const alerts=[];
   active.forEach(s=>{
     const nm=s.name.toLowerCase();
@@ -2178,7 +2251,7 @@ async function computeHealthScore(){
   const recentT=tasks.filter(t=>t.due&&t.due>=new Date(Date.now()-7*86400000).toISOString().slice(0,10));
   const taskScore=recentT.length===0?80:Math.round(recentT.filter(t=>t.done).length/recentT.length*100);
   const actScore=Math.min(100,briefings.filter(b=>b.timestamp>weekAgo).length*33);
-  let wb=0;try{const cp=localStorage.getItem('o_cache');if(cp){const p=JSON.parse(cp);if(p.weather){if(p.weather.temp>=8&&p.weather.temp<=28)wb+=10;if(p.weather.humidity<75)wb+=5;}}}catch(e){}
+  let wb=0;try{const cp=safeStorage.getItem('o_cache');if(cp){const p=JSON.parse(cp);if(p.weather){if(p.weather.temp>=8&&p.weather.temp<=28)wb+=10;if(p.weather.humidity<75)wb+=5;}}}catch(e){}
   const capped=Math.min(100,Math.max(0,Math.round(germRate*.35+diseaseScore*.3+taskScore*.2+actScore*.15)+wb));
   // Upsert with ISO week key (no duplicates)
   const dt=new Date(),jan1=new Date(dt.getFullYear(),0,1);
