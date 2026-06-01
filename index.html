@@ -8,8 +8,8 @@
 <meta name="theme-color" id="metaTheme" content="#080e0a">
 <link id="pwaManifest" rel="manifest">
 <title>L'Oracle du Jardinier v16</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
@@ -404,6 +404,30 @@ input[type="file"]{display:none}
 .skeleton{background:linear-gradient(90deg,rgba(0,255,157,.07) 25%,rgba(0,255,157,.15) 50%,rgba(0,255,157,.07) 75%);background-size:200% 100%;animation:skel-wave 1.4s infinite;border-radius:6px;min-height:1em}
 @keyframes skel-wave{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
+
+/* ── GPU acceleration hints ── */
+@media (prefers-reduced-motion: no-preference) {
+  [class*="btn"],[class*="button"],[class*="card"],[class*="modal"],[class*="tab"],[class*="panel"] {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+}
+
+
+/* ── Dark mode system preference — Studio Niko Design ── */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f0f4f8;
+    --bg2: #e2e8f0;
+    --text: #1a202c;
+    --accent: #0070f3;
+  }
+  body { background: var(--bg); color: var(--text); }
+}
+
 </style>
 <script>
 
@@ -480,7 +504,7 @@ const safeStorage = (() => {
 
   <meta name="description" content="Oracle du Jardinier — Assistant agronomique IA pour la permaculture Loire-Atlantique 44.">
   <meta name="author" content="Nicolas Julienne — Studio Niko Design">
-  <meta name="theme-color" content="#00ff9d">
+  <meta name="theme-color" content="#00ff9d" media="(prefers-color-scheme: dark)">
   <meta property="og:title" content="Oracle du Jardinier | Studio Niko Design">
   <meta property="og:description" content="Assistant agronomique IA — 60+ plantes, diagnostic photo Pixtral, météo Open-Meteo, calendrier biodynamique">
   <meta property="og:type" content="website">
@@ -631,7 +655,7 @@ const safeStorage = (() => {
       <input type="file" id="diagInput" accept="image/*" capture="environment" onchange="handleDiagPhoto(this)">
       <div id="upPrompt"><div style="font-size:1.6em;margin-bottom:5px">📸</div><div style="font-size:.83em;font-weight:600;color:var(--tx);margin-bottom:2px">Photographier ou importer</div><div style="font-size:.72em;color:var(--tm)">Cliquez ou glissez une image</div></div>
     </label>
-    <img id="diagPreview" style="width:100%;max-width:340px;border-radius:8px;border:2px solid var(--bd2);display:none;margin:7px auto;object-fit:cover;max-height:240px" alt="">
+    <img loading="lazy" decoding="async" id="diagPreview" style="width:100%;max-width:340px;border-radius:8px;border:2px solid var(--bd2);display:none;margin:7px auto;object-fit:cover;max-height:240px" alt="">
     <div class="ar" style="margin-top:8px;justify-content:center">
       <button class="btn bp" id="btnDiag" onclick="runDiagnosis()" style="display:none">🔬 Analyser</button>
       <button class="btn bs" id="btnDiagClr" onclick="clearDiag()" style="display:none">✕ Effacer</button>
@@ -647,7 +671,7 @@ const safeStorage = (() => {
     <div style="margin-bottom:8px"><label>Modèle</label><select id="soilVisionModel"><option value="pixtral-12b-2409" selected>pixtral-12b-2409</option><option value="pixtral-large-2411">pixtral-large-2411</option></select></div>
     <label class="upload-zone" id="soilUploadZone"><input type="file" id="soilInput" accept="image/*" capture="environment" onchange="handleSoilPhoto(this)">
       <div id="soilUpPrompt"><div style="font-size:1.5em;margin-bottom:4px">🪱</div><div style="font-size:.83em;font-weight:600;color:var(--tx)">Photographier le sol</div><div style="font-size:.71em;color:var(--tm)">Surface ou section</div></div></label>
-    <img id="soilPreview" style="width:100%;max-width:340px;border-radius:8px;border:2px solid var(--bd2);display:none;margin:7px auto;object-fit:cover;max-height:220px" alt="">
+    <img loading="lazy" decoding="async" id="soilPreview" style="width:100%;max-width:340px;border-radius:8px;border:2px solid var(--bd2);display:none;margin:7px auto;object-fit:cover;max-height:220px" alt="">
     <div class="ar" style="margin-top:8px;justify-content:center">
       <button class="btn bp" id="btnSoil" onclick="runSoilAnalysis()" style="display:none">🪱 Analyser</button>
       <button class="btn bs" id="btnSoilClr" onclick="clearSoilDiag()" style="display:none">✕</button>
@@ -918,7 +942,7 @@ const safeStorage = (() => {
 </div>
 <canvas id="shareCanvas" style="display:none"></canvas>
 
-<div class="lb" id="lb" onclick="closeLB()" style="position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9000;display:none;align-items:center;justify-content:center;padding:12px"><button onclick="closeLB()" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,.13);border:none;color:#fff;font-size:1.1em;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button><img id="lbImg" src="" alt="" style="max-width:100%;max-height:88vh;border-radius:8px;object-fit:contain"></div>
+<div class="lb" id="lb" onclick="closeLB()" style="position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9000;display:none;align-items:center;justify-content:center;padding:12px"><button onclick="closeLB()" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,.13);border:none;color:#fff;font-size:1.1em;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button><img loading="lazy" decoding="async" id="lbImg" src="" alt="" style="max-width:100%;max-height:88vh;border-radius:8px;object-fit:contain"></div>
 <div id="toast"></div>
 
 <!-- VOICE STYLES added here -->
@@ -1372,7 +1396,7 @@ async function updateTaskBadge(){const all=await dbGetAll('tasks');const today=n
 // ════════════════════════════════════════════════════════════
 async function addSeed(){const name=document.getElementById('sName').value.trim();if(!name){showToast('⚠️ Nom requis','w');return;}if(!db){showToast('⚠️ DB non prête','w');return;}const seed={name,variety:document.getElementById('sVar').value.trim(),date:document.getElementById('sDate').value,germDate:document.getElementById('sGerm').value||null,harvDate:document.getElementById('sHarv').value||null,status:document.getElementById('sStat').value,notes:document.getElementById('sNotes').value.trim(),photos:[],createdAt:Date.now()};const tx=db.transaction('seeds','readwrite');tx.objectStore('seeds').add(seed);tx.oncomplete=async()=>{['sName','sVar','sNotes'].forEach(id=>document.getElementById(id).value='');['sGerm','sHarv'].forEach(id=>document.getElementById(id).value='');await renderSeeds();showToast('🌱 Semence ajoutée');};tx.onerror=()=>showToast('⚠️ Erreur DB','w');}
 
-async function renderSeeds(){if(!db)return;const tx=db.transaction('seeds','readonly');const req=tx.objectStore('seeds').getAll();req.onsuccess=()=>{const all=[...req.result].sort((a,b)=>b.createdAt-a.createdAt);const cnts={tous:all.length,semé:0,germé:0,pousse:0,récolté:0};all.forEach(s=>{if(cnts[s.status]!==undefined)cnts[s.status]++;});const lb={tous:'Toutes',semé:'Semées',germé:'Germées',pousse:'En pousse',récolté:'Récoltées'};document.getElementById('seedBar').innerHTML=Object.entries(cnts).map(([k,v])=>`<button class="ss2${seedFilter===k?' on':''}" onclick="setSeedF('${k}')">${lb[k]} <b>${v}</b></button>`).join('');const list=(seedFilter&&seedFilter!=='tous')?all.filter(s=>s.status===seedFilter):all;const c=document.getElementById('seedsContainer');if(!list.length){c.innerHTML='<div class="es"><div class="ic">🌱</div>Aucune semence.</div>';return;}c.innerHTML=`<div class="sgr">${list.map(s=>{const dt=s.date?new Date(s.date+'T12:00').toLocaleDateString('fr-FR'):'';const photos=(s.photos||[]).map(p=>`<img class="sth" src="${p}" onclick="openLB('${p}')" alt="">`).join('');let ph='';if(s.date&&s.germDate){const d1=Math.round((new Date(s.germDate)-new Date(s.date))/86400000);const k=s.name.toLowerCase().split(/[\s\/]/)[0];const ref=PHENO[k];ph+=`<div class="ph-txt">Germination ${d1}j${ref?` (réf ${ref.g[0]}-${ref.g[1]}j)`:''}</div>`;if(s.harvDate){const d2=Math.round((new Date(s.harvDate)-new Date(s.germDate))/86400000);ph+=`<div class="ph-bar"><div class="ph-fill" style="width:${ref?Math.min(100,Math.round(d2/ref.r[1]*100)):50}%"></div></div><div class="ph-txt">Récolte ${d2}j après germ${ref?` (réf ${ref.r[0]}-${ref.r[1]}j)`:''}</div>`;}else if(s.status==='pousse'&&s.germDate){const el=Math.round((now-new Date(s.germDate))/86400000);ph+=`<div class="ph-bar"><div class="ph-fill" style="width:${ref?Math.min(100,Math.round(el/ref.r[1]*100)):40}%"></div></div><div class="ph-txt">${el}j depuis germination</div>`;}}const si=['semé','germé','pousse','récolté'].indexOf(s.status);return`<div class="sc fu"><button class="sdl" onclick="delSeed(${s.id})">✕</button><div class="sn">${esc(s.name)}${s.variety?` <span style="color:var(--tm);font-size:.8em">(${esc(s.variety)})</span>`:''}</div><div class="sd2">Semis : ${dt}</div><select class="sst s${si}" onchange="updSeedSt(${s.id},this.value)"><option value="semé"${s.status==='semé'?' selected':''}>Semé</option><option value="germé"${s.status==='germé'?' selected':''}>Germé</option><option value="pousse"${s.status==='pousse'?' selected':''}>En pousse</option><option value="récolté"${s.status==='récolté'?' selected':''}>Récolté</option></select>${ph}${s.notes?`<div class="sno">${esc(s.notes)}</div>`:''}<div class="spr">${photos}<label class="aph">📷<input type="file" accept="image/*" capture="environment" onchange="addPhoto(${s.id},this)"></label></div></div>`;}).join('')}</div>`;}}
+async function renderSeeds(){if(!db)return;const tx=db.transaction('seeds','readonly');const req=tx.objectStore('seeds').getAll();req.onsuccess=()=>{const all=[...req.result].sort((a,b)=>b.createdAt-a.createdAt);const cnts={tous:all.length,semé:0,germé:0,pousse:0,récolté:0};all.forEach(s=>{if(cnts[s.status]!==undefined)cnts[s.status]++;});const lb={tous:'Toutes',semé:'Semées',germé:'Germées',pousse:'En pousse',récolté:'Récoltées'};document.getElementById('seedBar').innerHTML=Object.entries(cnts).map(([k,v])=>`<button class="ss2${seedFilter===k?' on':''}" onclick="setSeedF('${k}')">${lb[k]} <b>${v}</b></button>`).join('');const list=(seedFilter&&seedFilter!=='tous')?all.filter(s=>s.status===seedFilter):all;const c=document.getElementById('seedsContainer');if(!list.length){c.innerHTML='<div class="es"><div class="ic">🌱</div>Aucune semence.</div>';return;}c.innerHTML=`<div class="sgr">${list.map(s=>{const dt=s.date?new Date(s.date+'T12:00').toLocaleDateString('fr-FR'):'';const photos=(s.photos||[]).map(p=>`<img loading="lazy" decoding="async" class="sth" src="${p}" onclick="openLB('${p}')" alt="">`).join('');let ph='';if(s.date&&s.germDate){const d1=Math.round((new Date(s.germDate)-new Date(s.date))/86400000);const k=s.name.toLowerCase().split(/[\s\/]/)[0];const ref=PHENO[k];ph+=`<div class="ph-txt">Germination ${d1}j${ref?` (réf ${ref.g[0]}-${ref.g[1]}j)`:''}</div>`;if(s.harvDate){const d2=Math.round((new Date(s.harvDate)-new Date(s.germDate))/86400000);ph+=`<div class="ph-bar"><div class="ph-fill" style="width:${ref?Math.min(100,Math.round(d2/ref.r[1]*100)):50}%"></div></div><div class="ph-txt">Récolte ${d2}j après germ${ref?` (réf ${ref.r[0]}-${ref.r[1]}j)`:''}</div>`;}else if(s.status==='pousse'&&s.germDate){const el=Math.round((now-new Date(s.germDate))/86400000);ph+=`<div class="ph-bar"><div class="ph-fill" style="width:${ref?Math.min(100,Math.round(el/ref.r[1]*100)):40}%"></div></div><div class="ph-txt">${el}j depuis germination</div>`;}}const si=['semé','germé','pousse','récolté'].indexOf(s.status);return`<div class="sc fu"><button class="sdl" onclick="delSeed(${s.id})">✕</button><div class="sn">${esc(s.name)}${s.variety?` <span style="color:var(--tm);font-size:.8em">(${esc(s.variety)})</span>`:''}</div><div class="sd2">Semis : ${dt}</div><select class="sst s${si}" onchange="updSeedSt(${s.id},this.value)"><option value="semé"${s.status==='semé'?' selected':''}>Semé</option><option value="germé"${s.status==='germé'?' selected':''}>Germé</option><option value="pousse"${s.status==='pousse'?' selected':''}>En pousse</option><option value="récolté"${s.status==='récolté'?' selected':''}>Récolté</option></select>${ph}${s.notes?`<div class="sno">${esc(s.notes)}</div>`:''}<div class="spr">${photos}<label class="aph">📷<input type="file" accept="image/*" capture="environment" onchange="addPhoto(${s.id},this)"></label></div></div>`;}).join('')}</div>`;}}
 function setSeedF(f){seedFilter=(seedFilter===f)?null:f;renderSeeds();}
 function updSeedSt(id,status){if(!db)return;const tx=db.transaction('seeds','readwrite'),st=tx.objectStore('seeds'),r=st.get(id);r.onsuccess=()=>{if(!r.result)return;const o={...r.result,status};if(status==='germé'&&!o.germDate)o.germDate=now.toISOString().slice(0,10);if(status==='récolté'&&!o.harvDate)o.harvDate=now.toISOString().slice(0,10);st.put(o);tx.oncomplete=()=>{renderSeeds();showToast('✓ → '+status);};};}
 async function delSeed(id){await dbDelete('seeds',id);renderSeeds();showToast('Supprimée');}
@@ -2024,7 +2048,7 @@ async function renderDiagHistory(){
     const sc={sain:'dhs-sain',suspect:'dhs-suspect',malade:'dhs-malade'}[item.status]||'dhs-suspect';
     const si={sain:'✅',suspect:'⚠️',malade:'🔴'}[item.status]||'⚠️';
     return`<div class="dh-item" onclick="document.getElementById('dhi${i}').style.display=document.getElementById('dhi${i}').style.display==='none'?'block':'none'">
-      ${item.imgThumb?`<img class="dh-th" src="data:image/jpeg;base64,${item.imgThumb}" alt="" onerror="this.style.display='none'">`:
+      ${item.imgThumb?`<img loading="lazy" decoding="async" class="dh-th" src="data:image/jpeg;base64,${item.imgThumb}" alt="" onerror="this.style.display='none'">`:
         `<div class="dh-th" style="background:var(--sf3);display:flex;align-items:center;justify-content:center;font-size:1.2em">🔬</div>`}
       <div style="flex:1">
         <div class="dh-name">${esc(item.name||'—')}${item.plant&&item.plant!=='Non spécifiée'?` <span style="color:var(--tm);font-size:.81em">(${esc(item.plant)})</span>`:''}</div>
@@ -2541,5 +2565,13 @@ init();
 </script>
 
 </main>
+
+<!-- ── Notice RGPD — Studio Niko Design ── -->
+<div id="nikoRGPD" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(5,10,13,.97);border-top:1px solid rgba(0,255,157,.25);padding:14px 20px 14px;font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(255,255,255,.75);backdrop-filter:blur(8px)">
+  <strong style="color:#00ff9d">🔒 Confidentialité</strong> — Vos données restent sur votre appareil (stockage local chiffré AES-256-GCM). Aucune donnée personnelle n'est transmise à des tiers. Conforme RGPD.
+  &nbsp;<a href="#" onclick="document.getElementById('nikoRGPD').style.display='none';localStorage.setItem('rgpd_ok','1');return false" style="color:#00d4ff;text-decoration:none;margin-left:12px">Accepter ✕</a>
+</div>
+<script>if(!localStorage.getItem('rgpd_ok'))document.getElementById('nikoRGPD').style.display='block';</script>
+
 </body>
 </html>
