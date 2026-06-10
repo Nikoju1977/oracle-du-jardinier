@@ -8,6 +8,17 @@
 <meta name="theme-color" id="metaTheme" content="#080e0a">
 <link id="pwaManifest" rel="manifest">
 <title>L'Oracle du Jardinier v16</title>
+<script>/* Studio Niko · helpers vague C */
+window.safeStorage = window.safeStorage || (function(){var mem=new Map(),ls=null;try{ls=window.localStorage;var t='__niko__';ls.setItem(t,'1');ls.removeItem(t);}catch(e){ls=null;}
+return{getItem:function(k){try{return ls?ls.getItem(k):(mem.has(k)?mem.get(k):null);}catch(e){return mem.has(k)?mem.get(k):null;}},
+setItem:function(k,v){try{if(ls){ls.setItem(k,String(v));return;}}catch(e){}mem.set(k,String(v));},
+removeItem:function(k){try{if(ls)ls.removeItem(k);}catch(e){}mem.delete(k);},
+clear:function(){try{if(ls)ls.clear();}catch(e){}mem.clear();},
+key:function(i){try{if(ls)return ls.key(i);}catch(e){}var a=Array.from(mem.keys());return i<a.length?a[i]:null;},
+get length(){try{if(ls)return ls.length;}catch(e){}return mem.size;}};})();
+window.nikoFetch = window.nikoFetch || function(url,opts){function xhr(){opts=opts||{};return new Promise(function(res,rej){var x=new XMLHttpRequest();x.open((opts.method||'GET'),url,true);if(opts.headers){Object.keys(opts.headers).forEach(function(h){try{x.setRequestHeader(h,opts.headers[h]);}catch(e){}});}x.onload=function(){res({ok:x.status>=200&&x.status<300,status:x.status,statusText:x.statusText,url:url,text:function(){return Promise.resolve(x.responseText);},json:function(){return Promise.resolve(JSON.parse(x.responseText));},headers:{get:function(n){return x.getResponseHeader(n);}}});};x.onerror=function(){rej(new TypeError('Network request failed'));};x.send(opts.body||null);});}
+if(window.fetch){return window.fetch(url,opts).catch(function(){return xhr();});}return xhr();};
+</script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -432,7 +443,7 @@ input[type="file"]{display:none}
 <script>
 
 /* ── safeStorage AES-256-GCM — Studio Niko Design ─────────────────
-   Drop-in secure replacement for localStorage.
+   Drop-in secure replacement for safeStorage.
    Keys never leave the browser unencrypted.
    Usage: await safeStorage.setItem(key, value)
           await safeStorage.getItem(key)
@@ -1059,7 +1070,7 @@ function toggleTerrainContrast(){
   applyTheme(next);showToast(next==='terrain'?'⛺ Mode terrain':'🌙 Mode normal');
 }
 function applyTheme(t){document.documentElement.dataset.theme=t;document.getElementById('themeBtn').textContent=t==='dark'?'☀️':t==='light'?'⛺':'🌙';document.getElementById('metaTheme').content=t==='dark'?'#080e0a':t==='terrain'?'#0a1a0a':'#f1f7f1';}
-function initPWA(){const m={name:"L'Oracle du Jardinier v16",short_name:"Oracle 🌿",start_url:"./",display:"standalone",background_color:"#080e0a",theme_color:"#080e0a",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>",sizes:"512x512",type:"image/svg+xml"}]};document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));if('serviceWorker'in navigator&&location.protocol!=='file:'){const sw=`const C='oracle-v16';self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x))))));self.addEventListener('fetch',e=>{if(!e.request.url.startsWith('http')||/mistral\.ai|open-meteo/.test(e.request.url))return;e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>r||fetch(e.request))));});`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});}}
+function initPWA(){const m={name:"L'Oracle du Jardinier v16",short_name:"Oracle 🌿",start_url:"./",display:"standalone",background_color:"#080e0a",theme_color:"#080e0a",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>",sizes:"512x512",type:"image/svg+xml"}]};document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));if('serviceWorker'in navigator&&location.protocol!=='file:'){const sw=`const C='oracle-v16';self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x))))));self.addEventListener('fetch',e=>{if(!e.request.url.startsWith('http')||/mistral\.ai|open-meteo/.test(e.request.url))return;e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>r||nikoFetch(e.request))));});`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});}}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;document.getElementById('installBtn').classList.remove('hidden');});
 function installPWA(){if(!deferredInstall)return;deferredInstall.prompt();deferredInstall.userChoice.then(()=>document.getElementById('installBtn').classList.add('hidden'));}
@@ -1181,8 +1192,8 @@ async function fetchCurrentWeather(){
   const cW=new AbortController(),cA=new AbortController();
   const tW=setTimeout(()=>cW.abort(),5000),tA=setTimeout(()=>cA.abort(),5000);
   const[rW,rA]=await Promise.allSettled([
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&current=temperature_2m,wind_speed_10m,precipitation,relative_humidity_2m`,{signal:cW.signal}),
-    fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&current=pm2_5,european_aqi`,{signal:cA.signal})
+    nikoFetch(`https://api.open-meteo.com/v1/forecast?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&current=temperature_2m,wind_speed_10m,precipitation,relative_humidity_2m`,{signal:cW.signal}),
+    nikoFetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&current=pm2_5,european_aqi`,{signal:cA.signal})
   ]);
   clearTimeout(tW);clearTimeout(tA);
   if(rW.status==='fulfilled'&&rW.value.ok){try{const j=await rW.value.json();w={temp:j.current.temperature_2m,wind:j.current.wind_speed_10m,precip:j.current.precipitation,humidity:j.current.relative_humidity_2m,source:'live'};}catch(e){}}
@@ -1194,7 +1205,7 @@ async function fetchHourly(){
   if(!navigator.onLine)return;
   try{
     const ctrl=new AbortController(),tid=setTimeout(()=>ctrl.abort(),5000);
-    const res=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FParis&forecast_days=1`,{signal:ctrl.signal});
+    const res=await nikoFetch(`https://api.open-meteo.com/v1/forecast?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FParis&forecast_days=1`,{signal:ctrl.signal});
     clearTimeout(tid);if(!res.ok)throw new Error();
     const d=await res.json();const curH=new Date().getHours();
     const strip=document.getElementById('hwStrip');
@@ -1208,7 +1219,7 @@ async function fetch7Day(){
   st.style.display='block';stTxt.textContent='Chargement Open-Meteo…';
   try{
     const ctrl=new AbortController(),tid=setTimeout(()=>ctrl.abort(),7000);
-    const res=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,relative_humidity_2m_max&timezone=Europe%2FParis&forecast_days=7`,{signal:ctrl.signal});
+    const res=await nikoFetch(`https://api.open-meteo.com/v1/forecast?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,relative_humidity_2m_max&timezone=Europe%2FParis&forecast_days=7`,{signal:ctrl.signal});
     clearTimeout(tid);if(!res.ok)throw new Error('HTTP '+res.status);
     const d=await res.json();lastForecastData=d.daily;
     const fi=d.daily.temperature_2m_min.map((t,i)=>t<3?i:-1).filter(i=>i>=0);
@@ -1285,7 +1296,7 @@ async function launchOracle(){
     const model=document.getElementById('model').value;
     const body={model,messages:[{role:'user',content:buildPrompt(weather,air,moon,sea,agents)}],temperature:.6,max_tokens:1400};
     if(model.includes('large')||model.includes('small'))body.response_format={type:'json_object'};
-    const resp=await fetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${raw}`},body:JSON.stringify(body)});
+    const resp=await nikoFetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${raw}`},body:JSON.stringify(body)});
     const ERRS={401:'Clé invalide.',429:'Quota dépassé.',422:'Paramètre non supporté.'};
     if(!resp.ok)throw new Error(`HTTP ${resp.status}${ERRS[resp.status]?' — '+ERRS[resp.status]:''}`);
     const raw2=(await resp.json()).choices?.[0]?.message?.content||'';
@@ -1363,7 +1374,7 @@ function renderLib(){const cats=[...new Set(DISEASE_LIB.map(d=>d.cat))];document
 function setLibCat(c){libCat=(libCat===c)?null:c;renderLib();}
 function filterLib(){const q=(document.getElementById('libSearch').value||'').toLowerCase();let data=DISEASE_LIB;if(libCat)data=data.filter(d=>d.cat===libCat);if(q)data=data.filter(d=>d.name.toLowerCase().includes(q)||d.plants.join(' ').toLowerCase().includes(q)||d.symptoms.toLowerCase().includes(q));const c=document.getElementById('libContainer');if(!data.length){c.innerHTML='<div class="es"><div class="ic">🔍</div>Aucun résultat.</div>';return;}const typeLabel={fun:'🍄 Champignon',bac:'🦠 Bactérie',rav:'🐛 Ravageur',vir:'⚗️ Carence/Virus'};const typeClass={fun:'lf',bac:'lb',rav:'lr',vir:'lv'};const urgColor={high:'var(--rd)',medium:'var(--am)',low:'var(--g)'};c.innerHTML=data.map(d=>`<div class="lib-card" id="lc-${d.id}" onclick="document.getElementById('lc-${d.id}').classList.toggle('open')"><div style="display:flex;align-items:center;gap:8px"><div style="flex:1"><div class="lib-nm">${esc(d.name)} <span class="ltag ${typeClass[d.type]||'lb'}">${typeLabel[d.type]||d.type}</span></div><div class="lib-sub">${d.plants.slice(0,4).join(', ')}</div></div><span style="font-size:.68em;color:${urgColor[d.urgency]||'var(--tm)'};font-family:'DM Mono',monospace;font-weight:700">${{high:'URGENT',medium:'ATTENTION',low:'SURVEILLER'}[d.urgency]||''}</span></div><div class="lib-body"><div class="lib-st">Symptômes</div>${esc(d.symptoms)}<div class="lib-st">Causes</div>${esc(d.causes)}<div class="lib-st">Prévention</div>${esc(d.prevention)}<div class="lib-st">Bio</div>${(d.bio||[]).map(t=>`🌿 ${esc(t)}`).join(' · ')}</div></div>`).join('');}
 
-async function searchDiseaseMistral(){const desc=document.getElementById('libMiIn').value.trim();if(!desc){showToast('⚠️ Décrivez les symptômes','w');return;}const raw=document.getElementById('apiKey').value.trim().replace(/[\u200B-\u200D\uFEFF\u00AD]/g,'').replace(/[^\x20-\x7E]/g,'').trim();if(!raw){showToast('⚠️ Clé API requise','w');return;}const plant=document.getElementById('libMiPlant').value.trim();const bar=document.getElementById('libMiBar'),dot=document.getElementById('libMiDot'),txt=document.getElementById('libMiTxt'),res=document.getElementById('libMiResult');bar.classList.add('on');dot.className='sd';txt.textContent='🤖 Mistral identifie…';res.innerHTML='';const prompt=`Phytopathologiste expert Loire-Atlantique, France. Symptômes : "${desc}"${plant?'\nPlante : '+plant:''}. Sol limono-argileux, climat océanique. JSON uniquement :{"name":"Nom","type":"champignon|bactérie|virus|ravageur|carence","confidence":"high|medium|low","description":"2-3 phrases","causes":"Conditions","prevention":"Mesures","traitements_bio":["B1","B2","B3"],"traitements_conv":["Conv"],"urgence":"immediate|soon|monitoring|none","plantes":["p1","p2"]}`;try{const resp=await fetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${raw}`},body:JSON.stringify({model:'mistral-small-latest',messages:[{role:'user',content:prompt}],response_format:{type:'json_object'},max_tokens:650,temperature:.3})});if(!resp.ok)throw new Error('HTTP '+resp.status);const r=JSON.parse((await resp.json()).choices?.[0]?.message?.content||'{}');const tc={fun:'lf',bac:'lb',rav:'lr',vir:'lv',champignon:'lf',bactérie:'lb',ravageur:'lr',carence:'lv',virus:'lv'};res.innerHTML=`<div class="lib-card open" style="margin-top:8px"><div style="display:flex;align-items:center;gap:8px"><div style="flex:1"><div class="lib-nm">${esc(r.name||'—')} <span class="ltag ${tc[r.type]||'lb'}">🤖 Mistral</span></div>${(r.plantes||[]).length?`<div class="lib-sub">${r.plantes.join(', ')}</div>`:''}</div></div><div class="lib-body" style="display:block"><div class="lib-st">Diagnostic</div>${esc(r.description||'')}<div class="lib-st">Causes</div>${esc(r.causes||'')}<div class="lib-st">Prévention</div>${esc(r.prevention||'')}<div class="lib-st">Traitements bio</div>${(r.traitements_bio||[]).map(t=>`🌿 ${esc(t)}`).join(' · ')}</div></div>`;dot.className='sd done';txt.textContent='✓ Identifié';}catch(e){res.innerHTML=`<div class="eb"><div class="et">❌ ${esc(e.message)}</div></div>`;dot.className='sd err';txt.textContent='Erreur';}}
+async function searchDiseaseMistral(){const desc=document.getElementById('libMiIn').value.trim();if(!desc){showToast('⚠️ Décrivez les symptômes','w');return;}const raw=document.getElementById('apiKey').value.trim().replace(/[\u200B-\u200D\uFEFF\u00AD]/g,'').replace(/[^\x20-\x7E]/g,'').trim();if(!raw){showToast('⚠️ Clé API requise','w');return;}const plant=document.getElementById('libMiPlant').value.trim();const bar=document.getElementById('libMiBar'),dot=document.getElementById('libMiDot'),txt=document.getElementById('libMiTxt'),res=document.getElementById('libMiResult');bar.classList.add('on');dot.className='sd';txt.textContent='🤖 Mistral identifie…';res.innerHTML='';const prompt=`Phytopathologiste expert Loire-Atlantique, France. Symptômes : "${desc}"${plant?'\nPlante : '+plant:''}. Sol limono-argileux, climat océanique. JSON uniquement :{"name":"Nom","type":"champignon|bactérie|virus|ravageur|carence","confidence":"high|medium|low","description":"2-3 phrases","causes":"Conditions","prevention":"Mesures","traitements_bio":["B1","B2","B3"],"traitements_conv":["Conv"],"urgence":"immediate|soon|monitoring|none","plantes":["p1","p2"]}`;try{const resp=await nikoFetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${raw}`},body:JSON.stringify({model:'mistral-small-latest',messages:[{role:'user',content:prompt}],response_format:{type:'json_object'},max_tokens:650,temperature:.3})});if(!resp.ok)throw new Error('HTTP '+resp.status);const r=JSON.parse((await resp.json()).choices?.[0]?.message?.content||'{}');const tc={fun:'lf',bac:'lb',rav:'lr',vir:'lv',champignon:'lf',bactérie:'lb',ravageur:'lr',carence:'lv',virus:'lv'};res.innerHTML=`<div class="lib-card open" style="margin-top:8px"><div style="display:flex;align-items:center;gap:8px"><div style="flex:1"><div class="lib-nm">${esc(r.name||'—')} <span class="ltag ${tc[r.type]||'lb'}">🤖 Mistral</span></div>${(r.plantes||[]).length?`<div class="lib-sub">${r.plantes.join(', ')}</div>`:''}</div></div><div class="lib-body" style="display:block"><div class="lib-st">Diagnostic</div>${esc(r.description||'')}<div class="lib-st">Causes</div>${esc(r.causes||'')}<div class="lib-st">Prévention</div>${esc(r.prevention||'')}<div class="lib-st">Traitements bio</div>${(r.traitements_bio||[]).map(t=>`🌿 ${esc(t)}`).join(' · ')}</div></div>`;dot.className='sd done';txt.textContent='✓ Identifié';}catch(e){res.innerHTML=`<div class="eb"><div class="et">❌ ${esc(e.message)}</div></div>`;dot.className='sd err';txt.textContent='Erreur';}}
 
 // ════════════════════════════════════════════════════════════
 // §19 · TÂCHES (avec notifications)
@@ -1479,7 +1490,7 @@ async function shareBriefing(){if(!dashData||!navigator.share)return;const d=das
 // ════════════════════════════════════════════════════════════
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function clearCache(){safeStorage.removeItem('o_cache');document.getElementById('dashboard').innerHTML='';['btnPDF','btnShare'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});document.getElementById('sugBox').classList.remove('on');currentSun=null;dashData=null;meteoLoaded=false;hourlyLoaded=false;document.getElementById('sunTxt').textContent='Luminosité : Non analysée';if(camStream){camStream.getTracks().forEach(t=>t.stop());document.getElementById('vid').style.display='none';camStream=null;}document.getElementById('frostBox').classList.remove('on');setStatus('🧹 Cache vidé. Prêt.','done');}
-function nukeAll(){if(!confirm('Tout supprimer ?'))return;localStorage.clear();if(db)['briefings','seeds','journal','tasks','diagnostics','health_scores'].forEach(s=>{try{db.transaction(s,'readwrite').objectStore(s).clear();}catch(e){}});location.reload();}
+function nukeAll(){if(!confirm('Tout supprimer ?'))return;safeStorage.clear();if(db)['briefings','seeds','journal','tasks','diagnostics','health_scores'].forEach(s=>{try{db.transaction(s,'readwrite').objectStore(s).clear();}catch(e){}});location.reload();}
 let _tt;
 function showToast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.style.background=type==='w'?'rgba(251,191,36,.95)':'rgba(74,222,128,.95)';el.style.color='#000';el.style.opacity='1';clearTimeout(_tt);_tt=setTimeout(()=>el.style.opacity='0',2400);}
 
@@ -1615,7 +1626,7 @@ async function runSoilAnalysis(){
 Analyse cette photo. JSON valide uniquement (sans backtick) :
 {"couleur":"Description teinte","score_fertilite":72,"humidite":"sec|frais|humide|gorgé","structure":"grumeleux|compact|battant|fissuré","matiere_organique":"faible|correcte|bonne|très bonne","vers_observes":true,"observations":"2-3 phrases","points_positifs":["P1","P2"],"points_attention":["A1","A2"],"amendements":["Am1","Am2","Am3"],"actions_immediates":["Ac1","Ac2"],"periode_optimale_travail":"Description"}`;
   try{
-    const resp=await fetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',
+    const resp=await nikoFetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${raw}`},
       body:JSON.stringify({model,messages:[{role:'user',content:[
         {type:'image_url',image_url:{url:`data:${soilImgMime};base64,${soilImgB64}`}},
@@ -1778,7 +1789,7 @@ async function fetchAndSaveMeteoWeek(){
   if(!navigator.onLine){showToast('⚠️ Hors-ligne','w');return;}
   try{
     const ctrl=new AbortController(),tid=setTimeout(()=>ctrl.abort(),7000);
-    const res=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,relative_humidity_2m_max&timezone=Europe%2FParis&forecast_days=7`,{signal:ctrl.signal});
+    const res=await nikoFetch(`https://api.open-meteo.com/v1/forecast?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,relative_humidity_2m_max&timezone=Europe%2FParis&forecast_days=7`,{signal:ctrl.signal});
     clearTimeout(tid);if(!res.ok)throw new Error();
     const d=await res.json();
     // ISO week key
@@ -2115,7 +2126,7 @@ async function runDiagnosis(){
   const prompt=`Phytopathologiste Loire-Atlantique. Plante${plant?' : '+plant:''}. Analyse l'image. JSON uniquement :
 {"status":"sain|suspect|malade","name":"Nom","confidence":"high|medium|low","score_sante":85,"description":"Symptômes 2-3 phrases","agent_causal":"Type ou null","urgence":"immediate|soon|monitoring|none","traitements_bio":["B1","B2","B3"],"traitements_conv":["Conv"],"prevention":"Conseil","pronostic":"Évolution"}`;
   try{
-    const resp=await fetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',
+    const resp=await nikoFetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${raw}`},
       body:JSON.stringify({model,messages:[{role:'user',content:[
         {type:'image_url',image_url:{url:`data:${diagImgMime};base64,${diagImgB64}`}},
@@ -2199,7 +2210,7 @@ async function fetchAndRenderWxWidget(){
   if(!navigator.onLine)return;
   try{
     const ctrl=new AbortController(),tid=setTimeout(()=>ctrl.abort(),5000);
-    const res=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&current=temperature_2m,wind_speed_10m,precipitation,relative_humidity_2m,weather_code&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FParis&forecast_days=1`,{signal:ctrl.signal});
+    const res=await nikoFetch(`https://api.open-meteo.com/v1/forecast?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&current=temperature_2m,wind_speed_10m,precipitation,relative_humidity_2m,weather_code&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FParis&forecast_days=1`,{signal:ctrl.signal});
     clearTimeout(tid);if(!res.ok)return;
     const d=await res.json();const cur=d.current,h=d.hourly;
     const code=cur.weather_code||0;
@@ -2569,9 +2580,9 @@ init();
 <!-- ── Notice RGPD — Studio Niko Design ── -->
 <div id="nikoRGPD" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(5,10,13,.97);border-top:1px solid rgba(0,255,157,.25);padding:14px 20px 14px;font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(255,255,255,.75);backdrop-filter:blur(8px)">
   <strong style="color:#00ff9d">🔒 Confidentialité</strong> — Vos données restent sur votre appareil (stockage local chiffré AES-256-GCM). Aucune donnée personnelle n'est transmise à des tiers. Conforme RGPD.
-  &nbsp;<a href="#" onclick="document.getElementById('nikoRGPD').style.display='none';localStorage.setItem('rgpd_ok','1');return false" style="color:#00d4ff;text-decoration:none;margin-left:12px">Accepter ✕</a>
+  &nbsp;<a href="#" onclick="document.getElementById('nikoRGPD').style.display='none';safeStorage.setItem('rgpd_ok','1');return false" style="color:#00d4ff;text-decoration:none;margin-left:12px">Accepter ✕</a>
 </div>
-<script>if(!localStorage.getItem('rgpd_ok'))document.getElementById('nikoRGPD').style.display='block';</script>
+<script>if(!safeStorage.getItem('rgpd_ok'))document.getElementById('nikoRGPD').style.display='block';</script>
 
 </body>
 </html>
