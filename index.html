@@ -449,67 +449,7 @@ input[type="file"]{display:none}
           await safeStorage.getItem(key)
           await safeStorage.removeItem(key)
 ─────────────────────────────────────────────────────────────────── */
-const safeStorage = (() => {
-  const SALT_KEY = '__niko_salt__';
-  const enc = new TextEncoder();
-  const dec = new TextDecoder();
-
-  async function _getKey() {
-    let salt = safeStorage.getItem(SALT_KEY);
-    if (!salt) {
-      salt = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-        .map(b => b.toString(16).padStart(2,'0')).join('');
-      safeStorage.setItem(SALT_KEY, salt);
-    }
-    const keyMat = await crypto.subtle.importKey(
-      'raw', enc.encode(salt + navigator.userAgent.slice(0,32)),
-      { name:'PBKDF2' }, false, ['deriveKey']
-    );
-    return crypto.subtle.deriveKey(
-      { name:'PBKDF2', salt: enc.encode(salt), iterations:100000, hash:'SHA-256' },
-      keyMat, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
-    );
-  }
-
-  async function setItem(key, value) {
-    try {
-      const k = await _getKey();
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const ct = await crypto.subtle.encrypt(
-        { name:'AES-GCM', iv }, k, enc.encode(JSON.stringify(value))
-      );
-      const payload = JSON.stringify({
-        iv: Array.from(iv),
-        ct: Array.from(new Uint8Array(ct))
-      });
-      safeStorage.setItem('__enc_' + key, payload);
-    } catch(e) {
-      safeStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
-    }
-  }
-
-  async function getItem(key) {
-    try {
-      const raw = safeStorage.getItem('__enc_' + key);
-      if (!raw) return safeStorage.getItem(key); // fallback unencrypted
-      const { iv, ct } = JSON.parse(raw);
-      const k = await _getKey();
-      const pt = await crypto.subtle.decrypt(
-        { name:'AES-GCM', iv: new Uint8Array(iv) }, k, new Uint8Array(ct)
-      );
-      return JSON.parse(dec.decode(pt));
-    } catch(e) {
-      return safeStorage.getItem(key);
-    }
-  }
-
-  async function removeItem(key) {
-    safeStorage.removeItem('__enc_' + key);
-    safeStorage.removeItem(key);
-  }
-
-  return { setItem, getItem, removeItem };
-})();
+const safeStorage = window.safeStorage; /* facade synchrone Studio Niko — l'implémentation AES async était incompatible avec les lectures synchrones */
 
 </script>
 
@@ -1070,7 +1010,7 @@ function toggleTerrainContrast(){
   applyTheme(next);showToast(next==='terrain'?'⛺ Mode terrain':'🌙 Mode normal');
 }
 function applyTheme(t){document.documentElement.dataset.theme=t;document.getElementById('themeBtn').textContent=t==='dark'?'☀️':t==='light'?'⛺':'🌙';document.getElementById('metaTheme').content=t==='dark'?'#080e0a':t==='terrain'?'#0a1a0a':'#f1f7f1';}
-function initPWA(){const m={name:"L'Oracle du Jardinier v16",short_name:"Oracle 🌿",start_url:"./",display:"standalone",background_color:"#080e0a",theme_color:"#080e0a",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>",sizes:"512x512",type:"image/svg+xml"}]};document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));if('serviceWorker'in navigator&&location.protocol!=='file:'){const sw=`const C='oracle-v16';self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x))))));self.addEventListener('fetch',e=>{if(!e.request.url.startsWith('http')||/mistral\.ai|open-meteo/.test(e.request.url))return;e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>r||nikoFetch(e.request))));});`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});}}
+function initPWA(){const m={name:"L'Oracle du Jardinier v16",short_name:"Oracle 🌿",start_url:"./",display:"standalone",background_color:"#080e0a",theme_color:"#080e0a",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>",sizes:"512x512",type:"image/svg+xml"}]};document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));if('serviceWorker'in navigator&&location.protocol!=='file:'){const sw=`const C='oracle-v16';self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x))))));self.addEventListener('fetch',e=>{if(!e.request.url.startsWith('http')||/mistral\.ai|open-meteo/.test(e.request.url))return;e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>r||fetch(e.request))));});`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});}}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;document.getElementById('installBtn').classList.remove('hidden');});
 function installPWA(){if(!deferredInstall)return;deferredInstall.prompt();deferredInstall.userChoice.then(()=>document.getElementById('installBtn').classList.add('hidden'));}
