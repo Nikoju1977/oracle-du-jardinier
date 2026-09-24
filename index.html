@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" id="metaTheme" content="#080e0a">
 <link id="pwaManifest" rel="manifest">
-<title>L'Oracle du Jardinier v16</title>
+<title>L'Oracle du Jardinier v17</title>
 <script>/* Studio Niko · helpers vague C */
 window.safeStorage = window.safeStorage || (function(){var mem=new Map(),ls=null;try{ls=window.localStorage;var t='__niko__';ls.setItem(t,'1');ls.removeItem(t);}catch(e){ls=null;}
 return{getItem:function(k){try{return ls?ls.getItem(k):(mem.has(k)?mem.get(k):null);}catch(e){return mem.has(k)?mem.get(k):null;}},
@@ -529,7 +529,7 @@ const safeStorage = window.safeStorage; /* facade synchrone Studio Niko — l'im
     <div class="pn-t">🔑 Clé API Mistral</div>
     <div class="g2">
       <div><label>Clé API</label><div class="fr"><input type="password" id="apiKey" placeholder="Coller votre clé…" autocomplete="off" spellcheck="false"><button class="bg2" onclick="toggleKey()">👁</button></div></div>
-      <div><label>Modèle</label><select id="model"><option value="mistral-large-latest" selected>mistral-large-latest</option><option value="mistral-small-latest">mistral-small-latest</option><option value="open-mistral-nemo">open-mistral-nemo (rapide)</option></select></div>
+      <div><label>Modèle</label><select id="model"><option value="mistral-large-latest" selected>mistral-large-latest</option><option value="mistral-medium-latest">mistral-medium-latest</option><option value="mistral-small-latest">mistral-small-latest</option><option value="ministral-8b-latest">ministral-8b-latest (rapide)</option></select></div>
     </div>
   </div>
   <div class="pn">
@@ -596,10 +596,10 @@ const safeStorage = window.safeStorage; /* facade synchrone Studio Niko — l'im
 <!-- ===== DIAGNOSTIC ===== -->
 <div id="tab-diagnostic" class="tp">
   <div class="pn">
-    <div class="pn-t">🔬 Analyse Pixtral Vision</div>
+    <div class="pn-t">🔬 Analyse Mistral Vision</div>
     <p style="font-size:.76em;color:var(--tm);margin-bottom:8px;line-height:1.5">Photographiez une plante malade. L'IA identifie la maladie et propose les traitements.</p>
     <div class="g2" style="margin-bottom:8px">
-      <div><label>Modèle Vision</label><select id="visionModel"><option value="pixtral-12b-2409" selected>pixtral-12b-2409</option><option value="pixtral-large-2411">pixtral-large-2411</option></select></div>
+      <div><label>Modèle Vision</label><select id="visionModel"><option value="ministral-14b-latest" selected>ministral-14b-latest</option><option value="mistral-medium-latest">mistral-medium-latest</option><option value="mistral-small-latest">mistral-small-latest</option></select></div>
       <div><label>Espèce (optionnel)</label><input type="text" id="diagPlant" placeholder="Tomate, Courgette…"></div>
     </div>
     <label class="upload-zone" id="uploadZone">
@@ -617,9 +617,9 @@ const safeStorage = window.safeStorage; /* facade synchrone Studio Niko — l'im
 
   <!-- SOIL ANALYSIS -->
   <div class="pn" style="margin-top:8px">
-    <div class="pn-t">🪱 Analyse de sol — Pixtral Vision</div>
-    <p style="font-size:.76em;color:var(--tm);margin-bottom:8px;line-height:1.5">Photographiez votre sol. Pixtral évalue couleur, structure, humidité, matière organique, vers, et propose des amendements ciblés Loire-Atlantique.</p>
-    <div style="margin-bottom:8px"><label>Modèle</label><select id="soilVisionModel"><option value="pixtral-12b-2409" selected>pixtral-12b-2409</option><option value="pixtral-large-2411">pixtral-large-2411</option></select></div>
+    <div class="pn-t">🪱 Analyse de sol — Mistral Vision</div>
+    <p style="font-size:.76em;color:var(--tm);margin-bottom:8px;line-height:1.5">Photographiez votre sol. Mistral Vision évalue couleur, structure, humidité, matière organique, vers, et propose des amendements ciblés Loire-Atlantique.</p>
+    <div style="margin-bottom:8px"><label>Modèle</label><select id="soilVisionModel"><option value="ministral-14b-latest" selected>ministral-14b-latest</option><option value="mistral-medium-latest">mistral-medium-latest</option><option value="mistral-small-latest">mistral-small-latest</option></select></div>
     <label class="upload-zone" id="soilUploadZone"><input type="file" id="soilInput" accept="image/*" capture="environment" onchange="handleSoilPhoto(this)">
       <div id="soilUpPrompt"><div style="font-size:1.5em;margin-bottom:4px">🪱</div><div style="font-size:.83em;font-weight:600;color:var(--tx)">Photographier le sol</div><div style="font-size:.71em;color:var(--tm)">Surface ou section</div></div></label>
     <img loading="lazy" decoding="async" id="soilPreview" style="width:100%;max-width:340px;border-radius:8px;border:2px solid var(--bd2);display:none;margin:7px auto;object-fit:cover;max-height:220px" alt="">
@@ -875,7 +875,7 @@ const safeStorage = window.safeStorage; /* facade synchrone Studio Niko — l'im
   <div class="pn"><div class="pn-t">🗄 Données</div>
     <div class="ar"><button class="btn bs" onclick="clearCache()">🔄 Cache</button><button class="btn brd" onclick="nukeAll()">⚠️ Réinitialiser</button></div>
   </div>
-  <div class="pn"><div class="pn-t">ℹ️ v9</div><p style="font-size:.76em;color:var(--tm);line-height:1.6">L'Oracle du Jardinier <strong>v9</strong><br>Nicolas Julienne Labs · La Meilleraye-de-Bretagne<br>Open-Meteo · Mistral AI · Pixtral · IndexedDB · PWA</p></div>
+  <div class="pn"><div class="pn-t">ℹ️ v17</div><p style="font-size:.76em;color:var(--tm);line-height:1.6">L'Oracle du Jardinier <strong>v17</strong><br>Nicolas Julienne Labs · La Meilleraye-de-Bretagne<br>Open-Meteo · Mistral AI · Vision · IndexedDB · PWA</p></div>
 </div>
 
 
@@ -1010,7 +1010,7 @@ function toggleTerrainContrast(){
   applyTheme(next);showToast(next==='terrain'?'⛺ Mode terrain':'🌙 Mode normal');
 }
 function applyTheme(t){document.documentElement.dataset.theme=t;document.getElementById('themeBtn').textContent=t==='dark'?'☀️':t==='light'?'⛺':'🌙';document.getElementById('metaTheme').content=t==='dark'?'#080e0a':t==='terrain'?'#0a1a0a':'#f1f7f1';}
-function initPWA(){const m={name:"L'Oracle du Jardinier v16",short_name:"Oracle 🌿",start_url:"./",display:"standalone",background_color:"#080e0a",theme_color:"#080e0a",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>",sizes:"512x512",type:"image/svg+xml"}]};document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));if('serviceWorker'in navigator&&location.protocol!=='file:'){const sw=`const C='oracle-v16';self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x))))));self.addEventListener('fetch',e=>{if(!e.request.url.startsWith('http')||/mistral\.ai|open-meteo/.test(e.request.url))return;e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>r||fetch(e.request))));});`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});}}
+function initPWA(){const m={name:"L'Oracle du Jardinier v17",short_name:"Oracle 🌿",start_url:"./",display:"standalone",background_color:"#080e0a",theme_color:"#080e0a",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>",sizes:"512x512",type:"image/svg+xml"}]};document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));if('serviceWorker'in navigator&&location.protocol!=='file:'){const sw=`const C='oracle-v17';self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x))))));self.addEventListener('fetch',e=>{if(!e.request.url.startsWith('http')||/mistral\.ai|open-meteo/.test(e.request.url))return;e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>r||fetch(e.request))));});`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});}}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;document.getElementById('installBtn').classList.remove('hidden');});
 function installPWA(){if(!deferredInstall)return;deferredInstall.prompt();deferredInstall.userChoice.then(()=>document.getElementById('installBtn').classList.add('hidden'));}
@@ -1039,6 +1039,7 @@ async function dbClear(s){if(!db)return;return new Promise(res=>{const tx=db.tra
 // ════════════════════════════════════════════════════════════
 // §6 · API KEY + NAV
 // ════════════════════════════════════════════════════════════
+const MISTRAL_ERRS={400:'Requête invalide.',401:'Clé invalide.',402:'Paiement requis — activez la facturation Mistral.',403:'Accès refusé.',404:'Modèle indisponible.',413:'Image trop volumineuse.',422:'Requête ou modèle non supporté.',429:'Quota ou limite de débit dépassé.'};
 function initAPIKey(){const k=safeStorage.getItem('o_key');if(k)document.getElementById('apiKey').value=k;document.getElementById('apiKey').addEventListener('input',e=>{const v=e.target.value.trim();v?safeStorage.setItem('o_key',v):safeStorage.removeItem('o_key');});}
 function toggleKey(){const i=document.getElementById('apiKey');i.type=i.type==='password'?'text':'password';}
 
@@ -1235,10 +1236,9 @@ async function launchOracle(){
     setStatus('🔮 Analyse Mistral (prompt hyper-local)…');
     const model=document.getElementById('model').value;
     const body={model,messages:[{role:'user',content:buildPrompt(weather,air,moon,sea,agents)}],temperature:.6,max_tokens:1400};
-    if(model.includes('large')||model.includes('small'))body.response_format={type:'json_object'};
+    body.response_format={type:'json_object'};
     const resp=await nikoFetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${raw}`},body:JSON.stringify(body)});
-    const ERRS={401:'Clé invalide.',429:'Quota dépassé.',422:'Paramètre non supporté.'};
-    if(!resp.ok)throw new Error(`HTTP ${resp.status}${ERRS[resp.status]?' — '+ERRS[resp.status]:''}`);
+    if(!resp.ok)throw new Error('HTTP '+resp.status+(MISTRAL_ERRS[resp.status]?' — '+MISTRAL_ERRS[resp.status]:''));
     const raw2=(await resp.json()).choices?.[0]?.message?.content||'';
     let result;
     try{result=JSON.parse(raw2.replace(/^```json\s*/i,'').replace(/^```/,'').replace(/```\s*$/,'').trim());}
@@ -1314,7 +1314,7 @@ function renderLib(){const cats=[...new Set(DISEASE_LIB.map(d=>d.cat))];document
 function setLibCat(c){libCat=(libCat===c)?null:c;renderLib();}
 function filterLib(){const q=(document.getElementById('libSearch').value||'').toLowerCase();let data=DISEASE_LIB;if(libCat)data=data.filter(d=>d.cat===libCat);if(q)data=data.filter(d=>d.name.toLowerCase().includes(q)||d.plants.join(' ').toLowerCase().includes(q)||d.symptoms.toLowerCase().includes(q));const c=document.getElementById('libContainer');if(!data.length){c.innerHTML='<div class="es"><div class="ic">🔍</div>Aucun résultat.</div>';return;}const typeLabel={fun:'🍄 Champignon',bac:'🦠 Bactérie',rav:'🐛 Ravageur',vir:'⚗️ Carence/Virus'};const typeClass={fun:'lf',bac:'lb',rav:'lr',vir:'lv'};const urgColor={high:'var(--rd)',medium:'var(--am)',low:'var(--g)'};c.innerHTML=data.map(d=>`<div class="lib-card" id="lc-${d.id}" onclick="document.getElementById('lc-${d.id}').classList.toggle('open')"><div style="display:flex;align-items:center;gap:8px"><div style="flex:1"><div class="lib-nm">${esc(d.name)} <span class="ltag ${typeClass[d.type]||'lb'}">${typeLabel[d.type]||d.type}</span></div><div class="lib-sub">${d.plants.slice(0,4).join(', ')}</div></div><span style="font-size:.68em;color:${urgColor[d.urgency]||'var(--tm)'};font-family:'DM Mono',monospace;font-weight:700">${{high:'URGENT',medium:'ATTENTION',low:'SURVEILLER'}[d.urgency]||''}</span></div><div class="lib-body"><div class="lib-st">Symptômes</div>${esc(d.symptoms)}<div class="lib-st">Causes</div>${esc(d.causes)}<div class="lib-st">Prévention</div>${esc(d.prevention)}<div class="lib-st">Bio</div>${(d.bio||[]).map(t=>`🌿 ${esc(t)}`).join(' · ')}</div></div>`).join('');}
 
-async function searchDiseaseMistral(){const desc=document.getElementById('libMiIn').value.trim();if(!desc){showToast('⚠️ Décrivez les symptômes','w');return;}const raw=document.getElementById('apiKey').value.trim().replace(/[\u200B-\u200D\uFEFF\u00AD]/g,'').replace(/[^\x20-\x7E]/g,'').trim();if(!raw){showToast('⚠️ Clé API requise','w');return;}const plant=document.getElementById('libMiPlant').value.trim();const bar=document.getElementById('libMiBar'),dot=document.getElementById('libMiDot'),txt=document.getElementById('libMiTxt'),res=document.getElementById('libMiResult');bar.classList.add('on');dot.className='sd';txt.textContent='🤖 Mistral identifie…';res.innerHTML='';const prompt=`Phytopathologiste expert Loire-Atlantique, France. Symptômes : "${desc}"${plant?'\nPlante : '+plant:''}. Sol limono-argileux, climat océanique. JSON uniquement :{"name":"Nom","type":"champignon|bactérie|virus|ravageur|carence","confidence":"high|medium|low","description":"2-3 phrases","causes":"Conditions","prevention":"Mesures","traitements_bio":["B1","B2","B3"],"traitements_conv":["Conv"],"urgence":"immediate|soon|monitoring|none","plantes":["p1","p2"]}`;try{const resp=await nikoFetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${raw}`},body:JSON.stringify({model:'mistral-small-latest',messages:[{role:'user',content:prompt}],response_format:{type:'json_object'},max_tokens:650,temperature:.3})});if(!resp.ok)throw new Error('HTTP '+resp.status);const r=JSON.parse((await resp.json()).choices?.[0]?.message?.content||'{}');const tc={fun:'lf',bac:'lb',rav:'lr',vir:'lv',champignon:'lf',bactérie:'lb',ravageur:'lr',carence:'lv',virus:'lv'};res.innerHTML=`<div class="lib-card open" style="margin-top:8px"><div style="display:flex;align-items:center;gap:8px"><div style="flex:1"><div class="lib-nm">${esc(r.name||'—')} <span class="ltag ${tc[r.type]||'lb'}">🤖 Mistral</span></div>${(r.plantes||[]).length?`<div class="lib-sub">${r.plantes.join(', ')}</div>`:''}</div></div><div class="lib-body" style="display:block"><div class="lib-st">Diagnostic</div>${esc(r.description||'')}<div class="lib-st">Causes</div>${esc(r.causes||'')}<div class="lib-st">Prévention</div>${esc(r.prevention||'')}<div class="lib-st">Traitements bio</div>${(r.traitements_bio||[]).map(t=>`🌿 ${esc(t)}`).join(' · ')}</div></div>`;dot.className='sd done';txt.textContent='✓ Identifié';}catch(e){res.innerHTML=`<div class="eb"><div class="et">❌ ${esc(e.message)}</div></div>`;dot.className='sd err';txt.textContent='Erreur';}}
+async function searchDiseaseMistral(){const desc=document.getElementById('libMiIn').value.trim();if(!desc){showToast('⚠️ Décrivez les symptômes','w');return;}const raw=document.getElementById('apiKey').value.trim().replace(/[\u200B-\u200D\uFEFF\u00AD]/g,'').replace(/[^\x20-\x7E]/g,'').trim();if(!raw){showToast('⚠️ Clé API requise','w');return;}const plant=document.getElementById('libMiPlant').value.trim();const bar=document.getElementById('libMiBar'),dot=document.getElementById('libMiDot'),txt=document.getElementById('libMiTxt'),res=document.getElementById('libMiResult');bar.classList.add('on');dot.className='sd';txt.textContent='🤖 Mistral identifie…';res.innerHTML='';const prompt=`Phytopathologiste expert Loire-Atlantique, France. Symptômes : "${desc}"${plant?'\nPlante : '+plant:''}. Sol limono-argileux, climat océanique. JSON uniquement :{"name":"Nom","type":"champignon|bactérie|virus|ravageur|carence","confidence":"high|medium|low","description":"2-3 phrases","causes":"Conditions","prevention":"Mesures","traitements_bio":["B1","B2","B3"],"traitements_conv":["Conv"],"urgence":"immediate|soon|monitoring|none","plantes":["p1","p2"]}`;try{const resp=await nikoFetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${raw}`},body:JSON.stringify({model:'mistral-small-latest',messages:[{role:'user',content:prompt}],response_format:{type:'json_object'},max_tokens:650,temperature:.3})});if(!resp.ok)throw new Error('HTTP '+resp.status+(MISTRAL_ERRS[resp.status]?' — '+MISTRAL_ERRS[resp.status]:''));const r=JSON.parse((await resp.json()).choices?.[0]?.message?.content||'{}');const tc={fun:'lf',bac:'lb',rav:'lr',vir:'lv',champignon:'lf',bactérie:'lb',ravageur:'lr',carence:'lv',virus:'lv'};res.innerHTML=`<div class="lib-card open" style="margin-top:8px"><div style="display:flex;align-items:center;gap:8px"><div style="flex:1"><div class="lib-nm">${esc(r.name||'—')} <span class="ltag ${tc[r.type]||'lb'}">🤖 Mistral</span></div>${(r.plantes||[]).length?`<div class="lib-sub">${r.plantes.join(', ')}</div>`:''}</div></div><div class="lib-body" style="display:block"><div class="lib-st">Diagnostic</div>${esc(r.description||'')}<div class="lib-st">Causes</div>${esc(r.causes||'')}<div class="lib-st">Prévention</div>${esc(r.prevention||'')}<div class="lib-st">Traitements bio</div>${(r.traitements_bio||[]).map(t=>`🌿 ${esc(t)}`).join(' · ')}</div></div>`;dot.className='sd done';txt.textContent='✓ Identifié';}catch(e){res.innerHTML=`<div class="eb"><div class="et">❌ ${esc(e.message)}</div></div>`;dot.className='sd err';txt.textContent='Erreur';}}
 
 // ════════════════════════════════════════════════════════════
 // §19 · TÂCHES (avec notifications)
@@ -1407,7 +1407,7 @@ const NPRESETS=[{key:'morning',label:'🌅 Briefing matinal',desc:'7h00',h:7,m:0
 function getSN(){try{return JSON.parse(safeStorage.getItem('o_notifs')||'{}');}catch(e){return{};}}
 function renderNotifPanel(){const saved=getSN();document.getElementById('notifRows').innerHTML=NPRESETS.map(n=>`<div class="nr"><div style="flex:1"><div style="font-size:.82em;font-weight:500">${n.label}</div><div style="font-size:.7em;color:var(--tm);margin-top:1px">${n.desc}</div></div><label class="tw"><input type="checkbox" id="nt-${n.key}"${saved[n.key]?' checked':''} onchange="toggleNotif('${n.key}',this.checked)"><span class="tsl"></span></label></div>`).join('');document.getElementById('notifBanner').style.display='Notification'in window&&Notification.permission==='denied'?'block':'none';renderCustomNotifs();}
 async function reqNotif(){if(!('Notification'in window)){showToast('Non compatible','w');return;}const p=await Notification.requestPermission();document.getElementById('notifBanner').style.display=p==='denied'?'block':'none';showToast(p==='granted'?'✓ Activées':'⚠️ Refusé',p==='granted'?'ok':'w');if(p==='granted')scheduleAllTaskNotifs();}
-function testNotif(){if(Notification.permission!=='granted'){reqNotif();return;}new Notification('🌿 Oracle Jardinier v9',{body:'Notifications OK!'});}
+function testNotif(){if(Notification.permission!=='granted'){reqNotif();return;}new Notification('🌿 Oracle Jardinier v17',{body:'Notifications OK!'});}
 function toggleNotif(key,on){const s=getSN();s[key]=on;safeStorage.setItem('o_notifs',JSON.stringify(s));if(on){if(Notification.permission!=='granted')reqNotif();schedPreset(key);}else{if(notifTimers[key]){clearInterval(notifTimers[key]);delete notifTimers[key];}}}
 function schedPreset(key){const c=NPRESETS.find(n=>n.key===key);if(!c)return;if(notifTimers[key])clearInterval(notifTimers[key]);notifTimers[key]=setInterval(()=>{const t=new Date();if(t.getHours()===c.h&&t.getMinutes()===c.m&&t.getSeconds()<2&&Notification.permission==='granted')new Notification('🌿 Oracle Jardinier',{body:c.msg});},1000);}
 function addCustomNotif(){const time=document.getElementById('nTime').value,msg=document.getElementById('nMsg').value.trim();if(!msg){showToast('⚠️ Message requis','w');return;}if(Notification.permission!=='granted'){reqNotif();return;}const[h,m]=time.split(':').map(Number),id='c_'+Date.now();schedNotifs.push({id,time,msg});safeStorage.setItem('o_sched',JSON.stringify(schedNotifs));document.getElementById('nMsg').value='';notifTimers[id]=setInterval(()=>{const t=new Date();if(t.getHours()===h&&t.getMinutes()===m&&t.getSeconds()<2&&Notification.permission==='granted')new Notification('🌿 Oracle Jardinier',{body:msg});},1000);renderCustomNotifs();showToast(`⏰ ${time}`);}
@@ -1418,12 +1418,12 @@ function delCustomNotif(i){const n=schedNotifs[i];if(n&&notifTimers[n.id]){clear
 // ════════════════════════════════════════════════════════════
 // §27 · PDF + EXPORT/IMPORT
 // ════════════════════════════════════════════════════════════
-function exportPDF(){if(!dashData){showToast('⚠️ Aucun briefing','w');return;}const{jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});const d=dashData.result,ds=`${JOURS[now.getDay()]} ${now.getDate()} ${MOIS[now.getMonth()]} ${now.getFullYear()}`;const LW=170,ML=15,PH=297;doc.setFillColor(8,14,10);doc.rect(0,0,210,29,'F');doc.setTextColor(74,222,128);doc.setFontSize(16);doc.setFont('helvetica','bold');doc.text("L'Oracle du Jardinier v16",105,12,{align:'center'});doc.setFontSize(8);doc.setTextColor(97,143,97);doc.text(`${ds} · ${activeGarden.name} · Sol : ${SOIL[activeGarden.soil]?.label||activeGarden.soil}`,105,21,{align:'center'});let y=37;function ep(n){if(y+n>PH-10){doc.addPage();y=13;}}const sl=doc.splitTextToSize('💡 '+(d.summary||''),LW-5);doc.setFillColor(16,28,16);doc.roundedRect(ML,y,LW,4+sl.length*4.3,2,2,'F');doc.setTextColor(200,240,200);doc.setFontSize(7.8);doc.setFont('helvetica','normal');doc.text(sl,ML+3,y+4.3);y+=6+sl.length*4.3;if(d.soil_alert){const sal=doc.splitTextToSize('🪱 '+d.soil_alert,LW-5);ep(4+sal.length*4.3);doc.setFillColor(38,28,8);doc.roundedRect(ML,y,LW,4+sal.length*4.3,2,2,'F');doc.setTextColor(251,191,36);doc.text(sal,ML+3,y+4.3);y+=6+sal.length*4.3;}function sec(title,clr,items){ep(10);doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...clr);doc.text(title,ML,y);y+=5.5;(items||[]).forEach(it=>{const tl=doc.splitTextToSize('• '+(it.title||''),LW-3);const rl=doc.splitTextToSize('  '+(it.reason||''),LW-7);ep(tl.length*4.3+rl.length*3.8+3);doc.setFont('helvetica','bold');doc.setFontSize(8.3);doc.setTextColor(220,242,220);doc.text(tl,ML+2,y);y+=tl.length*4.3;doc.setFont('helvetica','normal');doc.setFontSize(7.6);doc.setTextColor(145,185,145);doc.text(rl,ML+4,y);y+=rl.length*3.8+2;});y+=2;}sec('✅ Actions',[74,222,128],d.do);sec('⛔ À éviter',[248,113,113],d.dont);sec('🔭 Prévisions',[96,165,250],(d.forecast||[]).map(f=>({title:f.label,reason:f.action})));doc.setFontSize(6);doc.setTextColor(55,85,55);doc.text("L'Oracle du Jardinier v16 · Nicolas Julienne Labs · Open-Meteo · Mistral AI",105,PH-5,{align:'center'});doc.save(`oracle-v16-${now.toISOString().slice(0,10)}.pdf`);showToast('📄 PDF exporté');}
+function exportPDF(){if(!dashData){showToast('⚠️ Aucun briefing','w');return;}const{jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});const d=dashData.result,ds=`${JOURS[now.getDay()]} ${now.getDate()} ${MOIS[now.getMonth()]} ${now.getFullYear()}`;const LW=170,ML=15,PH=297;doc.setFillColor(8,14,10);doc.rect(0,0,210,29,'F');doc.setTextColor(74,222,128);doc.setFontSize(16);doc.setFont('helvetica','bold');doc.text("L'Oracle du Jardinier v17",105,12,{align:'center'});doc.setFontSize(8);doc.setTextColor(97,143,97);doc.text(`${ds} · ${activeGarden.name} · Sol : ${SOIL[activeGarden.soil]?.label||activeGarden.soil}`,105,21,{align:'center'});let y=37;function ep(n){if(y+n>PH-10){doc.addPage();y=13;}}const sl=doc.splitTextToSize('💡 '+(d.summary||''),LW-5);doc.setFillColor(16,28,16);doc.roundedRect(ML,y,LW,4+sl.length*4.3,2,2,'F');doc.setTextColor(200,240,200);doc.setFontSize(7.8);doc.setFont('helvetica','normal');doc.text(sl,ML+3,y+4.3);y+=6+sl.length*4.3;if(d.soil_alert){const sal=doc.splitTextToSize('🪱 '+d.soil_alert,LW-5);ep(4+sal.length*4.3);doc.setFillColor(38,28,8);doc.roundedRect(ML,y,LW,4+sal.length*4.3,2,2,'F');doc.setTextColor(251,191,36);doc.text(sal,ML+3,y+4.3);y+=6+sal.length*4.3;}function sec(title,clr,items){ep(10);doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...clr);doc.text(title,ML,y);y+=5.5;(items||[]).forEach(it=>{const tl=doc.splitTextToSize('• '+(it.title||''),LW-3);const rl=doc.splitTextToSize('  '+(it.reason||''),LW-7);ep(tl.length*4.3+rl.length*3.8+3);doc.setFont('helvetica','bold');doc.setFontSize(8.3);doc.setTextColor(220,242,220);doc.text(tl,ML+2,y);y+=tl.length*4.3;doc.setFont('helvetica','normal');doc.setFontSize(7.6);doc.setTextColor(145,185,145);doc.text(rl,ML+4,y);y+=rl.length*3.8+2;});y+=2;}sec('✅ Actions',[74,222,128],d.do);sec('⛔ À éviter',[248,113,113],d.dont);sec('🔭 Prévisions',[96,165,250],(d.forecast||[]).map(f=>({title:f.label,reason:f.action})));doc.setFontSize(6);doc.setTextColor(55,85,55);doc.text("L'Oracle du Jardinier v17 · Nicolas Julienne Labs · Open-Meteo · Mistral AI",105,PH-5,{align:'center'});doc.save(`oracle-v17-${now.toISOString().slice(0,10)}.pdf`);showToast('📄 PDF exporté');}
 
-async function exportAll(){const[briefings,seeds,journal,tasks,diagnostics]=await Promise.all([dbGetAll('briefings'),dbGetAll('seeds'),dbGetAll('journal'),dbGetAll('tasks'),dbGetAll('diagnostics')]);const p={version:16,exported:new Date().toISOString(),gardens:cfgGardens,activeGardenId:activeGarden.id,config:{theme:safeStorage.getItem('o_theme'),notifs:getSN(),sched:schedNotifs},briefings,seeds,journal,tasks,diagnostics};const blob=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`oracle-v16-backup-${now.toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);showToast(`⬇️ ${seeds.length} sem. · ${tasks.length} tâches · ${diagnostics.length} diagn.`);}
+async function exportAll(){const[briefings,seeds,journal,tasks,diagnostics]=await Promise.all([dbGetAll('briefings'),dbGetAll('seeds'),dbGetAll('journal'),dbGetAll('tasks'),dbGetAll('diagnostics')]);const p={version:16,exported:new Date().toISOString(),gardens:cfgGardens,activeGardenId:activeGarden.id,config:{theme:safeStorage.getItem('o_theme'),notifs:getSN(),sched:schedNotifs},briefings,seeds,journal,tasks,diagnostics};const blob=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`oracle-v17-backup-${now.toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);showToast(`⬇️ ${seeds.length} sem. · ${tasks.length} tâches · ${diagnostics.length} diagn.`);}
 async function importAll(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=async e=>{try{const data=JSON.parse(e.target.result);if(!data.version){showToast('⚠️ Fichier invalide','w');return;}if(!confirm(`Importer ${(data.seeds||[]).length} semences, ${(data.tasks||[]).length} tâches ?\nDonnées actuelles remplacées.`))return;if(data.gardens&&data.gardens.length){cfgGardens=data.gardens;saveGardens();initGardens();}await Promise.all(['seeds','briefings','journal','tasks','diagnostics'].map(s=>dbClear(s)));const add=async(s,items)=>{for(const item of(items||[])){const{id:_,...rest}=item;await dbAdd(s,rest).catch(()=>{});}};await Promise.all(['seeds','briefings','journal','tasks','diagnostics'].map(s=>add(s,data[s])));if(data.config){if(data.config.theme){safeStorage.setItem('o_theme',data.config.theme);applyTheme(data.config.theme);}if(data.config.notifs)safeStorage.setItem('o_notifs',JSON.stringify(data.config.notifs));if(data.config.sched){schedNotifs=data.config.sched;safeStorage.setItem('o_sched',JSON.stringify(schedNotifs));}}showToast(`✅ Import OK — ${(data.seeds||[]).length} semences`);await Promise.all([renderSeeds(),renderHistory(),renderJournal(),renderTasks()]);await renderDiagHistory();}catch(err){showToast('⚠️ Erreur import : '+err.message,'w');}};reader.readAsText(file);input.value='';}
 
-async function shareBriefing(){if(!dashData||!navigator.share)return;const d=dashData.result;const txt=`🌿 L'Oracle v9 — ${activeGarden.name}\n${now.toLocaleDateString('fr-FR')}\n\n💡 ${d.summary}\n\n${(d.do||[]).map(i=>'✅ '+i.title).join('\n')}\n\n${(d.dont||[]).map(i=>'⛔ '+i.title).join('\n')}`;try{await navigator.share({title:"L'Oracle du Jardinier v16",text:txt});}catch(e){if(e.name!=='AbortError')showToast('Partage impossible','w');}}
+async function shareBriefing(){if(!dashData||!navigator.share)return;const d=dashData.result;const txt=`🌿 L'Oracle v17 — ${activeGarden.name}\n${now.toLocaleDateString('fr-FR')}\n\n💡 ${d.summary}\n\n${(d.do||[]).map(i=>'✅ '+i.title).join('\n')}\n\n${(d.dont||[]).map(i=>'⛔ '+i.title).join('\n')}`;try{await navigator.share({title:"L'Oracle du Jardinier v17",text:txt});}catch(e){if(e.name!=='AbortError')showToast('Partage impossible','w');}}
 
 // ════════════════════════════════════════════════════════════
 // §28 · UTILS
@@ -1561,7 +1561,7 @@ async function runSoilAnalysis(){
   document.getElementById('soilResult').innerHTML='';
   const soilRef=SOIL[activeGarden.soil]||SOIL['limono-argileux'];
   const bar=document.getElementById('soilBar'),dot=document.getElementById('soilDot'),txt=document.getElementById('soilTxt');
-  bar.classList.add('on');dot.className='sd';txt.textContent='🪱 Pixtral analyse le sol…';
+  bar.classList.add('on');dot.className='sd';txt.textContent='🪱 Mistral Vision analyse le sol…';
   const prompt=`Pédologue expert Loire-Atlantique, France. Sol de référence : ${soilRef.label} (pH ${soilRef.ph}, drainage ${soilRef.drainage}).
 Analyse cette photo. JSON valide uniquement (sans backtick) :
 {"couleur":"Description teinte","score_fertilite":72,"humidite":"sec|frais|humide|gorgé","structure":"grumeleux|compact|battant|fissuré","matiere_organique":"faible|correcte|bonne|très bonne","vers_observes":true,"observations":"2-3 phrases","points_positifs":["P1","P2"],"points_attention":["A1","A2"],"amendements":["Am1","Am2","Am3"],"actions_immediates":["Ac1","Ac2"],"periode_optimale_travail":"Description"}`;
@@ -1569,9 +1569,9 @@ Analyse cette photo. JSON valide uniquement (sans backtick) :
     const resp=await nikoFetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${raw}`},
       body:JSON.stringify({model,messages:[{role:'user',content:[
-        {type:'image_url',image_url:{url:`data:${soilImgMime};base64,${soilImgB64}`}},
+        {type:'image_url',image_url:`data:${soilImgMime};base64,${soilImgB64}`},
         {type:'text',text:prompt}]}],response_format:{type:'json_object'},max_tokens:900,temperature:.3})});
-    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    if(!resp.ok)throw new Error('HTTP '+resp.status+(MISTRAL_ERRS[resp.status]?' — '+MISTRAL_ERRS[resp.status]:''));
     const r=JSON.parse((await resp.json()).choices?.[0]?.message?.content||'{}');
     renderSoilResult(r);dot.className='sd done';txt.textContent='✓ Sol analysé';
     // Save to photo_timeline
@@ -1627,7 +1627,7 @@ async function sharePNG(){
   ctx.fillStyle=hg;ctx.fillRect(0,0,W,75);
   ctx.strokeStyle=C.bd;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,75);ctx.lineTo(W,75);ctx.stroke();
   // Title
-  ctx.fillStyle=C.g;ctx.font='bold 20px Georgia,serif';ctx.fillText("🌿 L'Oracle du Jardinier v16",22,33);
+  ctx.fillStyle=C.g;ctx.font='bold 20px Georgia,serif';ctx.fillText("🌿 L'Oracle du Jardinier v17",22,33);
   ctx.fillStyle=C.tm;ctx.font='12px monospace';
   ctx.fillText(`${JOURS[now.getDay()]} ${now.getDate()} ${MOIS[now.getMonth()]} ${now.getFullYear()} · ${activeGarden.name}`,22,54);
   // Summary
@@ -1661,9 +1661,9 @@ async function sharePNG(){
   cv.style.display='none';
   try{
     const blob=await new Promise(res=>cv.toBlob(res,'image/png'));
-    const file=new File([blob],`oracle-v16-${now.toISOString().slice(0,10)}.png`,{type:'image/png'});
+    const file=new File([blob],`oracle-v17-${now.toISOString().slice(0,10)}.png`,{type:'image/png'});
     if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-      await navigator.share({title:"L'Oracle du Jardinier v16",files:[file]});
+      await navigator.share({title:"L'Oracle du Jardinier v17",files:[file]});
     }else{
       const url=URL.createObjectURL(blob);
       const a=document.createElement('a');a.href=url;a.download=file.name;a.click();
@@ -2062,16 +2062,16 @@ async function runDiagnosis(){
   const model=document.getElementById('visionModel').value;
   const btn=document.getElementById('btnDiag');btn.disabled=true;btn.textContent='⏳…';
   document.getElementById('diagResult').innerHTML='';
-  setDiagStatus('🔬 Pixtral analyse…');
+  setDiagStatus('🔬 Mistral Vision analyse…');
   const prompt=`Phytopathologiste Loire-Atlantique. Plante${plant?' : '+plant:''}. Analyse l'image. JSON uniquement :
 {"status":"sain|suspect|malade","name":"Nom","confidence":"high|medium|low","score_sante":85,"description":"Symptômes 2-3 phrases","agent_causal":"Type ou null","urgence":"immediate|soon|monitoring|none","traitements_bio":["B1","B2","B3"],"traitements_conv":["Conv"],"prevention":"Conseil","pronostic":"Évolution"}`;
   try{
     const resp=await nikoFetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${raw}`},
       body:JSON.stringify({model,messages:[{role:'user',content:[
-        {type:'image_url',image_url:{url:`data:${diagImgMime};base64,${diagImgB64}`}},
+        {type:'image_url',image_url:`data:${diagImgMime};base64,${diagImgB64}`},
         {type:'text',text:prompt}]}],response_format:{type:'json_object'},max_tokens:800,temperature:.3})});
-    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    if(!resp.ok)throw new Error('HTTP '+resp.status+(MISTRAL_ERRS[resp.status]?' — '+MISTRAL_ERRS[resp.status]:''));
     const r=JSON.parse((await resp.json()).choices?.[0]?.message?.content||'{}');
     renderDiagResult(r);setDiagStatus('✓ Analyse terminée','done');
     // Save to diagnostics store (clean, no DOM parsing)
@@ -2502,8 +2502,8 @@ renderHealthTab = async function() {
   await renderHealthTrend();
 };
 
-// §V16-I · Init supplémentaire v16
-(async function v16Init() {
+// §V16-I · Init supplémentaire v17
+(async function v17Init() {
   await checkOverdueTasks();
 })();
 
