@@ -1,4 +1,11 @@
 # 🌿 Oracle du Jardinier
+
+## Ce que fait l'application, en pratique
+
+L'**Oracle du Jardinier** regroupe en une interface **météo, calendrier de culture, gestion des jardins, semences, tâches, rappels, journal de terrain et statistiques**. Il présente également des parcours de diagnostic photo, de comparaison et de conseils générés par IA lorsqu'un fournisseur est configuré.
+
+**Statut :** assistant de jardin expérimental ; vérifier les informations botaniques, météorologiques et les dosages de produits avant application. Les repères biodynamiques restent interprétatifs.
+
 **Studio Niko Design** — Assistant agronomique IA · Permaculture Loire-Atlantique 44 · v17
 
 🔗 [oracle-du-jardinier.vercel.app](https://oracle-du-jardinier.vercel.app)
