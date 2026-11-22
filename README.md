@@ -36,3 +36,9 @@ La page `index.html` se consulte sur un serveur web statique ; pour tester local
 **Statut :** projet de démonstration, sans validation fonctionnelle ou expertise indépendante revendiquée dans cette mise à jour.
 
 [Voir le catalogue des projets](https://github.com/Nikoju1977).
+
+## PWA — correction du 22 novembre 2026
+
+L'ancienne inscription d'un Service Worker depuis une URL `blob:` a été remplacée dans le code par une inscription depuis `./sw.js` sur le même domaine. Le manifeste est désormais `manifest.webmanifest`, avec l'icône locale `icon.svg`. Le cache hors ligne ne concerne que la coque de l'application et le module facultatif Studio Niko Core ; **aucun résultat météo, conseil IA, compte ou donnée du jardin n'est stocké par le Service Worker**.
+
+Cette correction est **committée**. Elle ne constitue pas un essai sur iPhone/Android, ni une garantie d'installation PWA selon les navigateurs. Le démarrage initial nécessite HTTPS et la disponibilité des fichiers. Les bibliothèques CDN et les services externes ne sont pas disponibles hors ligne.
