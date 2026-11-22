@@ -6,7 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" id="metaTheme" content="#080e0a">
-<link id="pwaManifest" rel="manifest">
+<link id="pwaManifest" rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
 <title>L'Oracle du Jardinier v17</title>
 <script>/* Studio Niko · helpers vague C */
 window.safeStorage = window.safeStorage || (function(){var mem=new Map(),ls=null;try{ls=window.localStorage;var t='__niko__';ls.setItem(t,'1');ls.removeItem(t);}catch(e){ls=null;}
@@ -1035,7 +1036,15 @@ function toggleTerrainContrast(){
   applyTheme(next);showToast(next==='terrain'?'⛺ Mode terrain':'🌙 Mode normal');
 }
 function applyTheme(t){document.documentElement.dataset.theme=t;document.getElementById('themeBtn').textContent=t==='dark'?'☀️':t==='light'?'⛺':'🌙';document.getElementById('metaTheme').content=t==='dark'?'#080e0a':t==='terrain'?'#0a1a0a':'#f1f7f1';}
-function initPWA(){const m={name:"L'Oracle du Jardinier v17",short_name:"Oracle 🌿",start_url:"./",display:"standalone",background_color:"#080e0a",theme_color:"#080e0a",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>",sizes:"512x512",type:"image/svg+xml"}]};document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));if('serviceWorker'in navigator&&location.protocol!=='file:'){const sw=`const C='oracle-v17';self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x))))));self.addEventListener('fetch',e=>{if(!e.request.url.startsWith('http')||/mistral\.ai|open-meteo/.test(e.request.url))return;e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>r||fetch(e.request))));});`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});}}
+function initPWA(){
+  const manifest=document.getElementById('pwaManifest');
+  if(manifest)manifest.href='./manifest.webmanifest';
+  if(!('serviceWorker' in navigator)||location.protocol==='file:')return;
+  navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(error=>{
+    console.warn('Oracle PWA: Service Worker indisponible',error);
+    showToast('Hors ligne indisponible : consultez les permissions du navigateur.');
+  });
+}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;document.getElementById('installBtn').classList.remove('hidden');});
 function installPWA(){if(!deferredInstall)return;deferredInstall.prompt();deferredInstall.userChoice.then(()=>document.getElementById('installBtn').classList.add('hidden'));}
@@ -2653,5 +2662,6 @@ init();
 })();
 </script>
 <!-- /STUDIO NIKO — MODE D'EMPLOI INTÉGRÉ -->
+<script defer src="./studio-niko-core.js"></script>
 </body>
 </html>
