@@ -1,0 +1,20 @@
+{
+  "name": "L'Oracle du Jardinier",
+  "short_name": "Oracle Jardinier",
+  "description": "Calendrier, météo et carnet de jardinage local.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#080e0a",
+  "theme_color": "#080e0a",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
