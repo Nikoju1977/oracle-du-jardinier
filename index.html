@@ -1128,8 +1128,9 @@ async function toggleTaskTerrain(id,el){
 // §12 · MÉTÉO 7J + HORAIRE
 // ════════════════════════════════════════════════════════════
 async function fetchCurrentWeather(){
-  let w={temp:12,wind:15,precip:0,humidity:65,source:'fallback'};
-  let a={pm25:10,aqi:2,source:'fallback'};
+  // Ne jamais substituer des températures ou indices d'air fictifs à des observations.
+  let w=null;
+  let a={pm25:null,aqi:null,source:'unavailable'};
   const cW=new AbortController(),cA=new AbortController();
   const tW=setTimeout(()=>cW.abort(),5000),tA=setTimeout(()=>cA.abort(),5000);
   const[rW,rA]=await Promise.allSettled([
@@ -1137,8 +1138,22 @@ async function fetchCurrentWeather(){
     nikoFetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&current=pm2_5,european_aqi`,{signal:cA.signal})
   ]);
   clearTimeout(tW);clearTimeout(tA);
-  if(rW.status==='fulfilled'&&rW.value.ok){try{const j=await rW.value.json();w={temp:j.current.temperature_2m,wind:j.current.wind_speed_10m,precip:j.current.precipitation,humidity:j.current.relative_humidity_2m,source:'live'};}catch(e){}}
-  if(rA.status==='fulfilled'&&rA.value.ok){try{const j=await rA.value.json();a={pm25:j.current.pm2_5,aqi:j.current.european_aqi,source:'live'};}catch(e){}}
+  if(rW.status==='fulfilled'&&rW.value.ok){
+    try{
+      const j=await rW.value.json();
+      const c=j.current||{};
+      if([c.temperature_2m,c.wind_speed_10m,c.precipitation,c.relative_humidity_2m].every(Number.isFinite))
+        w={temp:c.temperature_2m,wind:c.wind_speed_10m,precip:c.precipitation,humidity:c.relative_humidity_2m,source:'live'};
+    }catch(e){console.warn('Météo Open-Meteo invalide',e);}
+  }
+  if(rA.status==='fulfilled'&&rA.value.ok){
+    try{
+      const j=await rA.value.json(),c=j.current||{};
+      if(Number.isFinite(c.pm2_5)&&Number.isFinite(c.european_aqi))
+        a={pm25:c.pm2_5,aqi:c.european_aqi,source:'live'};
+    }catch(e){console.warn('Air Open-Meteo invalide',e);}
+  }
+  if(!w)throw new Error('Météo indisponible : aucun briefing chiffré ne sera inventé. Réessayez avec une connexion active.');
   return{weather:w,air:a};
 }
 
@@ -1193,7 +1208,7 @@ Conseil : ${soil.conseils}
 ## DONNÉES TEMPS RÉEL — ${date}
 - Lieu : ${activeGarden.name} (${activeGarden.lat.toFixed(3)}, ${activeGarden.lon.toFixed(3)})
 - Température : ${w.temp}°C (sol estimé ${(w.temp-2).toFixed(1)}°C) | Vent : ${w.wind}km/h | Précip : ${w.precip}mm | Hum : ${w.humidity}%
-- PM2.5 : ${a.pm25.toFixed(1)}µg/m³ | Lune : ${moon.label} — Jour ${moon.type}
+- PM2.5 : ${Number.isFinite(a.pm25)?a.pm25.toFixed(1)+"µg/m³":"non disponible"} | Lune : ${moon.label} — Jour ${moon.type}
 - Saison : ${sea} | Ensoleillement : ${currentSun||'non analysé'}
 ${w.humidity>80&&w.precip>5?`⚠️ Risque engorgement sol`:''}
 
@@ -1270,7 +1285,7 @@ async function launchOracle(){
 // ════════════════════════════════════════════════════════════
 // §15 · RENDU DASHBOARD + SUGGESTIONS
 // ════════════════════════════════════════════════════════════
-function buildTelemetry(w,a,m,s,sun){const sl={soleil:'☀️ Plein Soleil','mi-ombre':'⛅ Mi-Ombre',ombre:'☁️ Ombre'}[sun]||'Non analysé';return[{status:w.temp<5?'danger':'optimal',title:'🌡️ Météo',value:`${w.temp}°C`,desc:`${w.wind}km/h · Hum ${w.humidity}%`,src:w.source==='live'?'sl':'ss',sl:w.source==='live'?'LIVE':'FALLBACK'},{status:sun?'warning':'optimal',title:'☀️ Exposition',value:sl,desc:'Analyse caméra',src:sun?'sl':'ss',sl:sun?'VISION':'VIDE'},{status:a.pm25>20?'warning':'optimal',title:'🫁 Air',value:`AQI ${a.aqi}`,desc:`PM2.5 ${a.pm25.toFixed(1)}µg/m³`,src:a.source==='live'?'sl':'ss',sl:a.source==='live'?'LIVE':'FALLBACK'},{status:'optimal',title:`${m.icon} Lune`,value:m.label,desc:`${s.charAt(0).toUpperCase()+s.slice(1)} · ${m.type}`,src:'ss',sl:'CALCULÉ'},{status:'optimal',title:'🪱 Sol',value:SOIL[activeGarden.soil]?.label||activeGarden.soil,desc:`Drainage ${SOIL[activeGarden.soil]?.drainage||'—'}`,src:'ss',sl:'RÉFÉRENTIEL'}];}
+function buildTelemetry(w,a,m,s,sun){const sl={soleil:'☀️ Plein Soleil','mi-ombre':'⛅ Mi-Ombre',ombre:'☁️ Ombre'}[sun]||'Non analysé';return[{status:w.temp<5?'danger':'optimal',title:'🌡️ Météo',value:`${w.temp}°C`,desc:`${w.wind}km/h · Hum ${w.humidity}%`,src:w.source==='live'?'sl':'ss',sl:w.source==='live'?'LIVE':'FALLBACK'},{status:sun?'warning':'optimal',title:'☀️ Exposition',value:sl,desc:'Analyse caméra',src:sun?'sl':'ss',sl:sun?'VISION':'VIDE'},{status:a.pm25>20?'warning':'optimal',title:'🫁 Air',value:a.source==='live'?`AQI ${a.aqi}`:'—',desc:Number.isFinite(a.pm25)?`PM2.5 ${a.pm25.toFixed(1)}µg/m³`:'Aucune mesure récente',src:a.source==='live'?'sl':'ss',sl:a.source==='live'?'LIVE':'INDISPONIBLE'},{status:'optimal',title:`${m.icon} Lune`,value:m.label,desc:`${s.charAt(0).toUpperCase()+s.slice(1)} · ${m.type}`,src:'ss',sl:'CALCULÉ'},{status:'optimal',title:'🪱 Sol',value:SOIL[activeGarden.soil]?.label||activeGarden.soil,desc:`Drainage ${SOIL[activeGarden.soil]?.drainage||'—'}`,src:'ss',sl:'RÉFÉRENTIEL'}];}
 
 function renderDashboard(data,tels){
   const cards=tels.map(c=>`<div class="tc ${c.status} fu"><div class="tt">${c.title} <span class="ts ${c.src}">${c.sl}</span></div><div class="tv">${c.value}</div><div class="td2">${c.desc}</div></div>`).join('');
@@ -2147,7 +2162,12 @@ async function renderPlantAlerts(){
 // §V11-L · WEATHER WIDGET (ported cleanly)
 // ════════════════════════════════════════════════════════════
 async function fetchAndRenderWxWidget(){
-  if(!navigator.onLine)return;
+  const unavailable=msg=>{
+    const d=document.getElementById('wxD'),t=document.getElementById('tDesc'),w=document.getElementById('wxT'),tt=document.getElementById('tTemp');
+    if(d)d.textContent=msg;if(t)t.textContent=msg;
+    if(w)w.textContent='—';if(tt)tt.textContent='—';
+  };
+  if(!navigator.onLine){unavailable('Météo indisponible hors connexion');return;}
   try{
     const ctrl=new AbortController(),tid=setTimeout(()=>ctrl.abort(),5000);
     const res=await nikoFetch(`https://api.open-meteo.com/v1/forecast?latitude=${activeGarden.lat}&longitude=${activeGarden.lon}&current=temperature_2m,wind_speed_10m,precipitation,relative_humidity_2m,weather_code&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FParis&forecast_days=1`,{signal:ctrl.signal});
@@ -2171,7 +2191,7 @@ async function fetchAndRenderWxWidget(){
     if(tT)tT.textContent=Math.round(cur.temperature_2m)+'°';
     if(tD)tD.textContent=WX_DE[code]||'Conditions variables';
     if(tS)tS.textContent=`💨 ${Math.round(cur.wind_speed_10m)}km/h · 💧 ${cur.relative_humidity_2m}%`;
-  }catch(e){}
+  }catch(e){unavailable('Météo indisponible : réseau ou service externe inaccessible');}
 }
 
 // ════════════════════════════════════════════════════════════
