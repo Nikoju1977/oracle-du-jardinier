@@ -465,6 +465,31 @@ const safeStorage = window.safeStorage; /* facade synchrone Studio Niko — l'im
   <meta name="twitter:description" content="Assistant agronomique IA — 60+ plantes, diagnostic photo Mistral Vision, météo Open-Meteo, calendrier biodynamique">
 <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style id="studio-niko-ui-v7">
+
+/* STUDIO NIKO UI V7 — navigation jardin accessible */
+:where(button,input,textarea,select,a):focus-visible{outline:3px solid var(--g);outline-offset:3px}
+.nav{scroll-snap-type:x proximity;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.nav .nb{min-height:46px;scroll-snap-align:start;font-size:.83rem;font-weight:650;padding:10px 14px}
+:where(.pn,.card,.wx-card,.fc){overflow-wrap:anywhere}
+:where(.btn,.pill){touch-action:manipulation}
+@media(max-width:680px){
+  .hd{padding:13px 12px}
+  .hd-acts{flex-wrap:wrap;justify-content:center}
+  .pill{min-height:38px;font-size:.72rem;padding:7px 11px}
+  .nav{top:0;gap:1px;scrollbar-width:thin}
+  .nav .nb{font-size:.81rem;min-height:46px}
+  .tp{padding:13px 11px}
+  .pn{padding:14px;border-radius:12px;margin-bottom:12px}
+  :where(input,select,textarea){font-size:16px;min-height:44px;max-width:100%}
+  textarea{min-height:96px}
+  .btn{min-height:44px;padding:9px 13px}
+  .fr{flex-wrap:wrap}
+  .fr input{min-width:0}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important} :where(.btn,.nb,.pill,input,select,textarea){transition:none!important}}
+
+</style>
 </head>
 <body role="application" aria-label="Oracle du Jardinier — Assistant agronomique IA">
 <main id="app" tabindex="-1">
