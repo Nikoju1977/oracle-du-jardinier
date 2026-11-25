@@ -191,23 +191,23 @@ function toggleKey(){
 
 const DEF_G={id:'default',name:'Le Jardin de Niko',emoji:'🌿',lat:47.55,lon:-1.40,soil:'limono-argileux',desc:'Bocage, Loire-Atlantique'};
 
+let gardenStorageBlocked=false;
 function validateGardenRecords(records){
   if(!Array.isArray(records)||!records.length||records.length>1000)throw Error('Liste de jardins invalide');
   const ids=new Set(),soils=new Set(['limono-argileux','sableux','argileux','limoneux','calcaire']);
-  return records.map(g=>{
+  return records.map(raw=>{
+    const g=raw&&typeof raw==='object'&&!Array.isArray(raw)?{...raw,emoji:raw.emoji??'🌿',desc:raw.desc??'',soil:raw.soil??'limono-argileux'}:raw;
     if(!g||typeof g!=='object'||typeof g.id!=='string'||!g.id||g.id.length>200||ids.has(g.id)||typeof g.name!=='string'||!g.name.trim()||g.name.length>500||typeof g.emoji!=='string'||g.emoji.length>100||!Number.isFinite(g.lat)||Math.abs(g.lat)>90||!Number.isFinite(g.lon)||Math.abs(g.lon)>180||!soils.has(g.soil)||typeof g.desc!=='string'||g.desc.length>10000)throw Error('Profil jardin invalide');
     ids.add(g.id);return {id:g.id,name:g.name,emoji:g.emoji,lat:g.lat,lon:g.lon,soil:g.soil,desc:g.desc};
   });
 }
 function loadGardens(){
-  try{
-    const g=JSON.parse(localStorage.getItem('o_gardens')||'null');
-    if(g&&g.length)return validateGardenRecords(g);
-  }catch(e){}
-  return[DEF_G];
+  gardenStorageBlocked=false;
+  try{const raw=localStorage.getItem('o_gardens');if(raw===null)return[DEF_G];return validateGardenRecords(JSON.parse(raw));}
+  catch(e){gardenStorageBlocked=true;return[DEF_G];}
 }
 
-function saveGardens(){localStorage.setItem('o_gardens',JSON.stringify(cfgGardens));}
+function saveGardens(){if(gardenStorageBlocked)throw Error('Profils existants illisibles : écriture bloquée');const raw=JSON.stringify(validateGardenRecords(cfgGardens));localStorage.setItem('o_gardens',raw);if(localStorage.getItem('o_gardens')!==raw)throw Error('Sauvegarde des profils non confirmée');}
 
 function initGardens(){
   cfgGardens=loadGardens();
@@ -233,19 +233,20 @@ function switchGarden(id){
 }
 
 function addGarden(){
+  if(gardenStorageBlocked){showToast('⚠️ Profils existants illisibles : modification bloquée','w');return;}
   const name=document.getElementById('gName').value.trim();
   if(!name){showToast('⚠️ Nom requis','w');return;}
   const g={
     id:'g_'+Date.now(),
     name,
     emoji:document.getElementById('gEmoji').value||'🌿',
-    lat:parseFloat(document.getElementById('gLat').value)||activeGarden.lat,
-    lon:parseFloat(document.getElementById('gLon').value)||activeGarden.lon,
+    lat:(document.getElementById('gLat').value.trim()===''?activeGarden.lat:Number(document.getElementById('gLat').value)),
+    lon:(document.getElementById('gLon').value.trim()===''?activeGarden.lon:Number(document.getElementById('gLon').value)),
     soil:document.getElementById('gSoil').value,
     desc:document.getElementById('gDesc').value
   };
-  cfgGardens.push(g);
-  saveGardens();
+  const old=cfgGardens;
+  try{cfgGardens=validateGardenRecords([...cfgGardens,g]);saveGardens();}catch(e){cfgGardens=old;showToast('⚠️ '+e.message,'w');return;}
   switchGarden(g.id);
   document.getElementById('gName').value='';
   document.getElementById('gDesc').value='';
@@ -254,6 +255,7 @@ function addGarden(){
 }
 
 function deleteGarden(id){
+  if(gardenStorageBlocked){showToast('⚠️ Profils existants illisibles : modification bloquée','w');return;}
   if(cfgGardens.length===1){showToast('⚠️ Un jardin minimum','w');return;}
   cfgGardens=cfgGardens.filter(g=>g.id!==id);
   if(activeGarden.id===id){activeGarden=cfgGardens[0];localStorage.setItem('o_active_garden',activeGarden.id);}
