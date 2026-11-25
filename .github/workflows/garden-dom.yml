@@ -1,0 +1,27 @@
+name: Garden DOM security regression
+on:
+  pull_request:
+    paths: ['index.html','script.js','sw.js','tests/garden-dom.mjs','tests/backup-transaction.mjs','tests/garden-legacy.mjs','.github/workflows/garden-dom.yml']
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Fetch exact baseline
+        run: |
+          mkdir -p "$RUNNER_TEMP/garden-base"
+          git fetch --depth=1 origin 6e7dc2e41a01c0b652a55116fa0c5cf350dc89b3
+          git show 6e7dc2e41a01c0b652a55116fa0c5cf350dc89b3:index.html > "$RUNNER_TEMP/garden-base/index.html"
+          git show 6e7dc2e41a01c0b652a55116fa0c5cf350dc89b3:script.js > "$RUNNER_TEMP/garden-base/script.js"
+      - run: npm install --no-save playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/garden-dom.mjs
+        env:
+          GARDEN_BASE: ${{ runner.temp }}/garden-base
+
+      - run: node tests/backup-transaction.mjs
+
+      - run: node tests/garden-legacy.mjs
