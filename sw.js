@@ -1,6 +1,6 @@
 /* Oracle du Jardinier — proper same-origin Service Worker; no API/user-data caching. */
 'use strict';
-const CACHE='oracle-du-jardinier-shell-v18';
+const CACHE='oracle-du-jardinier-shell-v19-safe-gardens';
 const PREFIX='oracle-du-jardinier-shell-';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg','./studio-niko-core.js'];
 const URLS=new Set(SHELL.map(x=>new URL(x,self.registration.scope).pathname));
