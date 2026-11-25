@@ -1,7 +1,7 @@
 name: Garden DOM security regression
 on:
   pull_request:
-    paths: ['index.html','script.js','sw.js','tests/garden-dom.mjs','.github/workflows/garden-dom.yml']
+    paths: ['index.html','script.js','sw.js','tests/garden-dom.mjs','tests/backup-transaction.mjs','.github/workflows/garden-dom.yml']
 permissions:
   contents: read
 jobs:
@@ -21,3 +21,5 @@ jobs:
       - run: node tests/garden-dom.mjs
         env:
           GARDEN_BASE: ${{ runner.temp }}/garden-base
+
+      - run: node tests/backup-transaction.mjs

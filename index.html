@@ -1495,7 +1495,53 @@ function delCustomNotif(i){const n=schedNotifs[i];if(n&&notifTimers[n.id]){clear
 function exportPDF(){if(!dashData){showToast('⚠️ Aucun briefing','w');return;}const{jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});const d=dashData.result,ds=`${JOURS[now.getDay()]} ${now.getDate()} ${MOIS[now.getMonth()]} ${now.getFullYear()}`;const LW=170,ML=15,PH=297;doc.setFillColor(8,14,10);doc.rect(0,0,210,29,'F');doc.setTextColor(74,222,128);doc.setFontSize(16);doc.setFont('helvetica','bold');doc.text("L'Oracle du Jardinier v17",105,12,{align:'center'});doc.setFontSize(8);doc.setTextColor(97,143,97);doc.text(`${ds} · ${activeGarden.name} · Sol : ${SOIL[activeGarden.soil]?.label||activeGarden.soil}`,105,21,{align:'center'});let y=37;function ep(n){if(y+n>PH-10){doc.addPage();y=13;}}const sl=doc.splitTextToSize('💡 '+(d.summary||''),LW-5);doc.setFillColor(16,28,16);doc.roundedRect(ML,y,LW,4+sl.length*4.3,2,2,'F');doc.setTextColor(200,240,200);doc.setFontSize(7.8);doc.setFont('helvetica','normal');doc.text(sl,ML+3,y+4.3);y+=6+sl.length*4.3;if(d.soil_alert){const sal=doc.splitTextToSize('🪱 '+d.soil_alert,LW-5);ep(4+sal.length*4.3);doc.setFillColor(38,28,8);doc.roundedRect(ML,y,LW,4+sal.length*4.3,2,2,'F');doc.setTextColor(251,191,36);doc.text(sal,ML+3,y+4.3);y+=6+sal.length*4.3;}function sec(title,clr,items){ep(10);doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...clr);doc.text(title,ML,y);y+=5.5;(items||[]).forEach(it=>{const tl=doc.splitTextToSize('• '+(it.title||''),LW-3);const rl=doc.splitTextToSize('  '+(it.reason||''),LW-7);ep(tl.length*4.3+rl.length*3.8+3);doc.setFont('helvetica','bold');doc.setFontSize(8.3);doc.setTextColor(220,242,220);doc.text(tl,ML+2,y);y+=tl.length*4.3;doc.setFont('helvetica','normal');doc.setFontSize(7.6);doc.setTextColor(145,185,145);doc.text(rl,ML+4,y);y+=rl.length*3.8+2;});y+=2;}sec('✅ Actions',[74,222,128],d.do);sec('⛔ À éviter',[248,113,113],d.dont);sec('🔭 Prévisions',[96,165,250],(d.forecast||[]).map(f=>({title:f.label,reason:f.action})));doc.setFontSize(6);doc.setTextColor(55,85,55);doc.text("L'Oracle du Jardinier v17 · Nicolas Julienne Labs · Open-Meteo · Mistral AI",105,PH-5,{align:'center'});doc.save(`oracle-v17-${now.toISOString().slice(0,10)}.pdf`);showToast('📄 PDF exporté');}
 
 async function exportAll(){const[briefings,seeds,journal,tasks,diagnostics]=await Promise.all([dbGetAll('briefings'),dbGetAll('seeds'),dbGetAll('journal'),dbGetAll('tasks'),dbGetAll('diagnostics')]);const p={version:16,exported:new Date().toISOString(),gardens:cfgGardens,activeGardenId:activeGarden.id,config:{theme:safeStorage.getItem('o_theme'),notifs:getSN(),sched:schedNotifs},briefings,seeds,journal,tasks,diagnostics};const blob=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`oracle-v17-backup-${now.toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);showToast(`⬇️ ${seeds.length} sem. · ${tasks.length} tâches · ${diagnostics.length} diagn.`);}
-async function importAll(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=async e=>{try{const data=JSON.parse(e.target.result);if(!data.version){showToast('⚠️ Fichier invalide','w');return;}const validatedGardens=data.gardens===undefined?null:validateGardenRecords(data.gardens);if(!confirm(`Importer ${(data.seeds||[]).length} semences, ${(data.tasks||[]).length} tâches ?\nDonnées actuelles remplacées.`))return;if(validatedGardens){cfgGardens=validatedGardens;saveGardens();initGardens();renderGardenList();}await Promise.all(['seeds','briefings','journal','tasks','diagnostics'].map(s=>dbClear(s)));const add=async(s,items)=>{for(const item of(items||[])){const{id:_,...rest}=item;await dbAdd(s,rest).catch(()=>{});}};await Promise.all(['seeds','briefings','journal','tasks','diagnostics'].map(s=>add(s,data[s])));if(data.config){if(data.config.theme){safeStorage.setItem('o_theme',data.config.theme);applyTheme(data.config.theme);}if(data.config.notifs)safeStorage.setItem('o_notifs',JSON.stringify(data.config.notifs));if(data.config.sched){schedNotifs=data.config.sched;safeStorage.setItem('o_sched',JSON.stringify(schedNotifs));}}showToast(`✅ Import OK — ${(data.seeds||[]).length} semences`);await Promise.all([renderSeeds(),renderHistory(),renderJournal(),renderTasks()]);await renderDiagHistory();}catch(err){showToast('⚠️ Erreur import : '+err.message,'w');}};reader.readAsText(file);input.value='';}
+function prepareBackupStores(data){
+  if(!data||typeof data!=='object'||Array.isArray(data)||!Number.isSafeInteger(data.version)||data.version<1)throw Error('Format de sauvegarde invalide');
+  const stores=['seeds','briefings','journal','tasks','diagnostics'],prepared={};
+  let total=0;
+  for(const name of stores){
+    if(!Object.hasOwn(data,name))continue;
+    const list=data[name];
+    if(!Array.isArray(list)||list.length>20000||(total+=list.length)>40000)throw Error('Collection invalide ou trop volumineuse : '+name);
+    prepared[name]=list.map(item=>{
+      if(!item||typeof item!=='object'||Array.isArray(item))throw Error('Enregistrement invalide : '+name);
+      const {id,...rest}=item;return rest;
+    });
+  }
+  if(!Object.keys(prepared).length)throw Error('Aucune collection à restaurer');
+  return prepared;
+}
+function restoreBackupStores(database,prepared){
+  return new Promise((resolve,reject)=>{
+    if(!database){reject(Error('Base locale indisponible'));return;}
+    const names=Object.keys(prepared);let tx;
+    try{tx=database.transaction(names,'readwrite');}catch(e){reject(e);return;}
+    tx.oncomplete=()=>resolve();
+    tx.onabort=()=>reject(tx.error||Error('Restauration annulée'));
+    try{
+      for(const name of names){const store=tx.objectStore(name);store.clear();for(const record of prepared[name])store.add(record);}
+    }catch(e){try{tx.abort();}catch{}reject(e);}
+  });
+}
+async function importAll(input){
+ const file=input.files[0];if(!file)return;input.value='';
+ if(importAll.pending){showToast('⚠️ Une restauration est déjà en cours','w');return;}
+ importAll.pending=true;
+ let committed=false;
+ try{
+  if(file.size>64*1024*1024)throw Error('Sauvegarde trop volumineuse (64 Mio maximum)');
+  const data=JSON.parse(await file.text()),prepared=prepareBackupStores(data);
+  const validatedGardens=data.gardens===undefined?null:validateGardenRecords(data.gardens);
+  const names=Object.keys(prepared);
+  if(!confirm('Restaurer '+names.map(n=>n+' : '+prepared[n].length).join(', ')+' ?\nLes collections présentes dans ce fichier seront remplacées. Les autres seront conservées.'))return;
+  await restoreBackupStores(db,prepared);committed=true;
+  if(validatedGardens){cfgGardens=validatedGardens;saveGardens();initGardens();renderGardenList();}
+  if(data.config){if(data.config.theme){safeStorage.setItem('o_theme',data.config.theme);applyTheme(data.config.theme);}if(data.config.notifs)safeStorage.setItem('o_notifs',JSON.stringify(data.config.notifs));if(data.config.sched){schedNotifs=data.config.sched;safeStorage.setItem('o_sched',JSON.stringify(schedNotifs));}}
+  await Promise.all([renderSeeds(),renderHistory(),renderJournal(),renderTasks()]);await renderDiagHistory();
+  showToast('✅ Collections restaurées');
+ }catch(err){showToast(committed?'⚠️ Collections restaurées, mais profil, préférences ou affichage à vérifier.':'⚠️ Restauration refusée ou annulée : '+err.message,'w');}
+ finally{importAll.pending=false;}
+}
 
 async function shareBriefing(){if(!dashData||!navigator.share)return;const d=dashData.result;const txt=`🌿 L'Oracle v17 — ${activeGarden.name}\n${now.toLocaleDateString('fr-FR')}\n\n💡 ${d.summary}\n\n${(d.do||[]).map(i=>'✅ '+i.title).join('\n')}\n\n${(d.dont||[]).map(i=>'⛔ '+i.title).join('\n')}`;try{await navigator.share({title:"L'Oracle du Jardinier v17",text:txt});}catch(e){if(e.name!=='AbortError')showToast('Partage impossible','w');}}
 
