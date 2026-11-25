@@ -1014,11 +1014,41 @@ const DEF_G={id:'default',name:'Le Jardin de Niko',emoji:'🌿',lat:47.55,lon:-1
 function loadGardens(){try{const g=JSON.parse(safeStorage.getItem('o_gardens')||'null');if(g&&g.length)return g;}catch(e){}return[DEF_G];}
 function saveGardens(){safeStorage.setItem('o_gardens',JSON.stringify(cfgGardens));}
 function initGardens(){cfgGardens=loadGardens();const aid=safeStorage.getItem('o_active_garden')||cfgGardens[0].id;activeGarden=cfgGardens.find(g=>g.id===aid)||cfgGardens[0];refreshGardenSw();updateHeader();}
-function refreshGardenSw(){const sw=document.getElementById('gardenSw');sw.innerHTML=cfgGardens.map(g=>`<option value="${g.id}"${g.id===activeGarden.id?' selected':''}>${g.emoji} ${g.name}</option>`).join('');}
+function refreshGardenSw(){
+  const sw=document.getElementById('gardenSw');
+  sw.replaceChildren(...cfgGardens.map(g=>{
+    const option=document.createElement('option');
+    option.value=String(g.id);
+    option.textContent=String(g.emoji??'')+' '+String(g.name??'');
+    option.selected=g.id===activeGarden.id;
+    return option;
+  }));
+}
+
 function switchGarden(id){activeGarden=cfgGardens.find(g=>g.id===id)||cfgGardens[0];safeStorage.setItem('o_active_garden',activeGarden.id);meteoLoaded=false;hourlyLoaded=false;safeStorage.removeItem('o_cache');updateHeader();fetchAndRenderWxWidget();showToast(`🌿 ${activeGarden.name}`);}
 function addGarden(){const name=document.getElementById('gName').value.trim();if(!name){showToast('⚠️ Nom requis','w');return;}const g={id:'g_'+Date.now(),name,emoji:document.getElementById('gEmoji').value.trim()||'🌿',lat:parseFloat(document.getElementById('gLat').value)||DEF_G.lat,lon:parseFloat(document.getElementById('gLon').value)||DEF_G.lon,soil:document.getElementById('gSoil').value,desc:document.getElementById('gDesc').value.trim()};cfgGardens.push(g);saveGardens();refreshGardenSw();['gName','gLat','gLon','gDesc'].forEach(id=>document.getElementById(id).value='');document.getElementById('gEmoji').value='🌿';renderGardenList();showToast(`✓ ${g.emoji} ${g.name}`);}
 function deleteGarden(id){if(cfgGardens.length===1){showToast('⚠️ Un jardin minimum','w');return;}cfgGardens=cfgGardens.filter(g=>g.id!==id);if(activeGarden.id===id){activeGarden=cfgGardens[0];safeStorage.setItem('o_active_garden',activeGarden.id);}saveGardens();refreshGardenSw();renderGardenList();}
-function renderGardenList(){document.getElementById('gardenList').innerHTML=cfgGardens.map(g=>`<div class="gc${g.id===activeGarden.id?' active':''}" onclick="switchGarden('${g.id}')"><span style="font-size:1.3em">${g.emoji}</span><div style="flex:1"><div style="font-weight:600;font-size:.85em">${esc(g.name)}</div><div style="font-size:.66em;color:var(--tm);font-family:'DM Mono',monospace">${g.lat.toFixed(3)}, ${g.lon.toFixed(3)} · ${SOIL[g.soil]?.label||g.soil}</div>${g.desc?`<div style="font-size:.64em;color:var(--tm);margin-top:1px">${esc(g.desc)}</div>`:''}</div>${cfgGardens.length>1?`<button onclick="event.stopPropagation();deleteGarden('${g.id}')" style="background:none;border:none;cursor:pointer;color:var(--td);font-size:.76em" onmouseover="this.style.color='var(--rd)'" onmouseout="this.style.color='var(--td)'">✕</button>`:''}</div>`).join('');}
+function renderGardenList(){
+  const list=document.getElementById('gardenList');
+  const el=(tag,text,style)=>{const node=document.createElement(tag);if(text!=null)node.textContent=String(text);if(style)node.style.cssText=style;return node;};
+  list.replaceChildren(...cfgGardens.map(g=>{
+    const row=el('div');row.className='gc'+(g.id===activeGarden.id?' active':'');
+    row.tabIndex=0;row.setAttribute('role','group');row.setAttribute('aria-label',String(g.name??'Jardin'));
+    const activate=()=>switchGarden(g.id);
+    row.addEventListener('click',activate);
+    row.addEventListener('keydown',e=>{if(e.target===row&&(e.key==='Enter'||e.key===' ')){e.preventDefault();activate();}});
+    const symbol=el('span',g.emoji,'font-size:1.3em');
+    const info=el('div',null,'flex:1');
+    info.append(el('div',g.name,'font-weight:600;font-size:.85em'));
+    const coord=n=>Number.isFinite(n)?n.toFixed(3):'—';
+    info.append(el('div',coord(g.lat)+', '+coord(g.lon)+' · '+String(SOIL[g.soil]?.label??g.soil??''),"font-size:.66em;color:var(--tm);font-family:'DM Mono',monospace"));
+    if(g.desc)info.append(el('div',g.desc,'font-size:.64em;color:var(--tm);margin-top:1px'));
+    row.append(symbol,info);
+    if(cfgGardens.length>1){const del=el('button','✕','background:none;border:none;cursor:pointer;color:var(--td);font-size:.76em');del.type='button';del.setAttribute('aria-label','Supprimer '+String(g.name??'ce jardin'));del.addEventListener('click',e=>{e.stopPropagation();deleteGarden(g.id);});del.addEventListener('mouseenter',()=>{del.style.color='var(--rd)'});del.addEventListener('mouseleave',()=>{del.style.color='var(--td)'});row.append(del);}
+    return row;
+  }));
+}
+
 function updateHeader(){document.getElementById('hdDate').textContent=`${JOURS[now.getDay()]} ${now.getDate()} ${MOIS[now.getMonth()]} ${now.getFullYear()} · ${activeGarden.name}`;}
 
 // ════════════════════════════════════════════════════════════

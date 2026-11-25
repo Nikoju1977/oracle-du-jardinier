@@ -1,0 +1,21 @@
+name: Garden render security regression
+on:
+  pull_request:
+    paths: ['index.html','script.js','tests/garden-render-security.mjs','.github/workflows/garden-render-security.yml']
+  push:
+    branches: [main]
+    paths: ['index.html','script.js','tests/garden-render-security.mjs','.github/workflows/garden-render-security.yml']
+permissions:
+  contents: read
+jobs:
+  dom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - run: git fetch --depth=1 origin 6e7dc2e41a01c0b652a55116fa0c5cf350dc89b3
+      - run: npm install --no-save --ignore-scripts playwright@1.56.1
+      - run: npx playwright install chromium
+      - run: node tests/garden-render-security.mjs

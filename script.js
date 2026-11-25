@@ -211,7 +211,13 @@ function initGardens(){
 
 function refreshGardenSw(){
   const sw=document.getElementById('gardenSw');
-  sw.innerHTML=cfgGardens.map(g=>`<option value="${g.id}"${g.id===activeGarden.id?' selected':''}>${g.emoji} ${g.name}</option>`).join('');
+  sw.replaceChildren(...cfgGardens.map(g=>{
+    const option=document.createElement('option');
+    option.value=String(g.id);
+    option.textContent=String(g.emoji??'')+' '+String(g.name??'');
+    option.selected=g.id===activeGarden.id;
+    return option;
+  }));
 }
 
 function switchGarden(id){
@@ -255,7 +261,20 @@ function deleteGarden(id){
 }
 
 function renderGardenList(){
-  document.getElementById('gardenList').innerHTML=cfgGardens.map(g=>`<div class="gc${g.id===activeGarden.id?' active':''}" onclick="switchGarden('${g.id}')"><span style="flex:1"><strong>${g.emoji} ${g.name}</strong><br><span style="font-size:.7em;color:var(--tm)">${g.desc}</span></span><button class="btn bs" onclick="deleteGarden('${g.id}');event.stopPropagation()" style="font-size:.7em;padding:3px 6px">🗑</button></div>`).join('');
+  const list=document.getElementById('gardenList');
+  list.replaceChildren(...cfgGardens.map(g=>{
+    const row=document.createElement('div');row.className='gc'+(g.id===activeGarden.id?' active':'');
+    row.tabIndex=0;row.setAttribute('role','group');row.setAttribute('aria-label',String(g.name??'Jardin'));
+    const activate=()=>switchGarden(g.id);
+    row.addEventListener('click',activate);
+    row.addEventListener('keydown',e=>{if(e.target===row&&(e.key==='Enter'||e.key===' ')){e.preventDefault();activate();}});
+    const info=document.createElement('span');info.style.flex='1';
+    const title=document.createElement('strong');title.textContent=String(g.emoji??'')+' '+String(g.name??'');
+    const desc=document.createElement('span');desc.style.cssText='font-size:.7em;color:var(--tm)';desc.textContent=String(g.desc??'');
+    info.append(title,document.createElement('br'),desc);
+    const del=document.createElement('button');del.type='button';del.className='btn bs';del.style.cssText='font-size:.7em;padding:3px 6px';del.textContent='🗑';del.setAttribute('aria-label','Supprimer '+String(g.name??'ce jardin'));
+    del.addEventListener('click',e=>{e.stopPropagation();deleteGarden(g.id);});row.append(info,del);return row;
+  }));
 }
 
 function updateHeader(){
